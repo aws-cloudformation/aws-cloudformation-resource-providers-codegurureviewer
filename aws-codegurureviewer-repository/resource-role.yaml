@@ -23,11 +23,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "initech:CreateReport"
-                - "initech:DeleteReport"
-                - "initech:DescribeReport"
-                - "initech:ListReports"
-                - "initech:UpdateReport"
+                - "codeguru-reviewer:AssociateRepository"
+                - "codeguru-reviewer:DescribeRepositoryAssociation"
+                - "codeguru-reviewer:DisassociateRepository"
+                - "codeguru-reviewer:ListRepositoryAssociations"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

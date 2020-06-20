@@ -2,103 +2,71 @@
   "typeName": "AWS::CodeGuruReviewer::Repository",
   "description": "An example resource schema demonstrating some basic constructs and validation rules.",
   "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-rpdk.git",
-  "definitions": {
-    "InitechDateFormat": {
-      "$comment": "Use the `definitions` block to provide shared resource property schemas",
-      "type": "string",
-      "format": "date-time"
-    },
-    "Memo": {
-      "type": "object",
-      "properties": {
-        "Heading": {
-          "type": "string"
-        },
-        "Body": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    }
-  },
+  "definitions": {},
   "properties": {
-    "TPSCode": {
-      "description": "A TPS Code is automatically generated on creation and assigned as the unique identifier.",
+    "Name": {
+      "description": "Name of the repository to be associated.",
       "type": "string",
-      "pattern": "^[A-Z]{3,5}[0-9]{8}-[0-9]{4}$"
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^\\S[\\w.-]*$"
     },
-    "Title": {
-      "description": "The title of the TPS report is a mandatory element.",
-      "type": "string",
-      "minLength": 20,
-      "maxLength": 250
-    },
-    "CoverSheetIncluded": {
-      "description": "Required for all TPS Reports submitted after 2/19/1999",
-      "type": "boolean"
-    },
-    "DueDate": {
-      "$ref": "#/definitions/InitechDateFormat"
-    },
-    "ApprovalDate": {
-      "$ref": "#/definitions/InitechDateFormat"
-    },
-    "Memo": {
-      "$ref": "#/definitions/Memo"
-    },
-    "SecondCopyOfMemo": {
-      "description": "In case you didn't get the first one.",
-      "$ref": "#/definitions/Memo"
-    },
-    "TestCode": {
+    "ProviderType": {
+      "description": "The type of repository to be associated.",
       "type": "string",
       "enum": [
-        "NOT_STARTED",
-        "CANCELLED"
+        "CodeCommit",
+        "Bitbucket"
       ]
     },
-    "Authors": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "Owner": {
+      "description": "The owner of the repository. For a GitHub or Bitbucket repository, this is the username for the account that owns the repository.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^\\S(.*\\S)?$"
+    },
+    "ConnectionArn": {
+      "description": "The Amazon Resource Name (ARN) of an AWS CodeStar Connections connection.",
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 256,
+      "pattern": "arn:aws(-[\\w]+)*:.+:.+:[0-9]{12}:.+"
     }
   },
   "additionalProperties": false,
   "required": [
-    "TestCode",
-    "Title"
+    "Name",
+    "ProviderType"
   ],
   "readOnlyProperties": [
-    "/properties/TPSCode"
+    "/properties/Name"
   ],
   "primaryIdentifier": [
-    "/properties/TPSCode"
+    "/properties/Name"
   ],
   "handlers": {
     "create": {
       "permissions": [
-        "initech:CreateReport"
+        "codeguru-reviewer:AssociateRepository"
       ]
     },
     "read": {
       "permissions": [
-        "initech:DescribeReport"
+        "codeguru-reviewer:DescribeRepositoryAssociation"
       ]
     },
     "update": {
-      "permissions": [
-        "initech:UpdateReport"
-      ]
+      "permissions": []
     },
     "delete": {
       "permissions": [
-        "initech:DeleteReport"
+        "codeguru-reviewer:DisassociateRepository"
       ]
     },
     "list": {
       "permissions": [
-        "initech:ListReports"
+        "codeguru-reviewer:ListRepositoryAssociations"
       ]
     }
   }
