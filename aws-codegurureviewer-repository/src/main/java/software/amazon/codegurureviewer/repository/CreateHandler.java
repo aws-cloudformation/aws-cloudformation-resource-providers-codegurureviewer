@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.codegurureviewer.model.ValidationExceptio
 import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.exceptions.CfnThrottlingException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -22,6 +23,8 @@ import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public class CreateHandler extends BaseHandlerStd {
+    private static final String MESSAGE_FORMAT_FAILED_TO_STABILIZE = "Repository association %s failed to stabilize.";
+
     private Logger logger;
 
     @Override
@@ -63,6 +66,7 @@ public class CreateHandler extends BaseHandlerStd {
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(associateRepositoryRequest,
                     proxyClient.client()::associateRepository);
+            logger.log(String.format("AssociateRepository response: %s", awsResponse.toString()));
         } catch (final InternalServerException e) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, e);
         } catch (final ValidationException e) {
@@ -84,8 +88,7 @@ public class CreateHandler extends BaseHandlerStd {
      * will need to ensure that your code
      * accounts for any potential issues, so that a subsequent read/update requests will not cause any conflicts (e.g
      * . NotFoundException/InvalidRequestException)
-     * for more information -> https://docs.aws.amazon
-     * .com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
+     * for more information -> https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
      *
      * @param awsRequest      the aws service request to create a resource
      * @param awsResponse     the aws service response to create a resource
@@ -107,11 +110,15 @@ public class CreateHandler extends BaseHandlerStd {
         boolean stabilized = false;
         DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
                 proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(awsResponse), proxyClient.client()::describeRepositoryAssociation);
-        if (describeRepositoryAssociationResponse.repositoryAssociation().state().equals(RepositoryAssociationState.ASSOCIATED)) {
+        logger.log(String.format("DescribeRepositoryAssociation response: %s", describeRepositoryAssociationResponse.toString()));
+        RepositoryAssociationState currentState = describeRepositoryAssociationResponse.repositoryAssociation().state();
+        if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
             stabilized = true;
+        } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
+            throw new CfnNotStabilizedException(MESSAGE_FORMAT_FAILED_TO_STABILIZE, awsResponse.repositoryAssociation().associationArn());
         }
-        logger.log(String.format("%s [%s] creation has stabilized: %s", ResourceModel.TYPE_NAME,
-                model.getPrimaryIdentifier(), stabilized));
+        logger.log(String.format("%s [%s] creation in state: %s. Creation has stabilized: %s", ResourceModel.TYPE_NAME,
+                model.getPrimaryIdentifier(), currentState.toString(), stabilized));
         return stabilized;
     }
 
