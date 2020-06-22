@@ -1,7 +1,9 @@
 package software.amazon.codegurureviewer.repository;
 
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryRequest;
+import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.CodeCommitRepository;
+import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
 import software.amazon.awssdk.services.codegurureviewer.model.Repository;
 import software.amazon.awssdk.services.codegurureviewer.model.ThirdPartySourceRepository;
@@ -25,13 +27,13 @@ public class Translator {
     static AssociateRepositoryRequest translateToAssociateRepositoryRequest(final ResourceModel model) {
         Repository repository = null;
         String providerType = model.getProviderType();
-        if (providerType.equals(ProviderType.CODE_COMMIT)) {
+        if (providerType.equals(ProviderType.CODE_COMMIT.toString())) {
             repository = Repository.builder().codeCommit(
                     CodeCommitRepository.builder()
                             .name(model.getName())
                             .build()
             ).build();
-        } else if (providerType.equals(ProviderType.BITBUCKET)) {
+        } else if (providerType.equals(ProviderType.BITBUCKET.toString())) {
             repository = Repository.builder().bitbucket(
                     ThirdPartySourceRepository.builder()
                             .name(model.getName())
@@ -44,5 +46,10 @@ public class Translator {
         }
 
         return AssociateRepositoryRequest.builder().repository(repository).build();
+    }
+
+    static DescribeRepositoryAssociationRequest translateToDescribeRepositoryAssociationRequest(final AssociateRepositoryResponse associateRepositoryResponse) {
+        return DescribeRepositoryAssociationRequest.builder()
+                .associationArn(associateRepositoryResponse.repositoryAssociation().associationArn()).build();
     }
 }
