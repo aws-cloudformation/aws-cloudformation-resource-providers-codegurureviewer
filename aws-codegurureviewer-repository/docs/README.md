@@ -1,6 +1,6 @@
 # AWS::CodeGuruReviewer::Repository
 
-An example resource schema demonstrating some basic constructs and validation rules.
+This resource schema represents the Repository resource in the Amazon CodeGuru Reviewer service.
 
 ## Syntax
 

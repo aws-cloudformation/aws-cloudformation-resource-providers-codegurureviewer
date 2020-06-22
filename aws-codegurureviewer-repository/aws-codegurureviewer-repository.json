@@ -1,7 +1,7 @@
 {
   "typeName": "AWS::CodeGuruReviewer::Repository",
-  "description": "An example resource schema demonstrating some basic constructs and validation rules.",
-  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-rpdk.git",
+  "description": "This resource schema represents the Repository resource in the Amazon CodeGuru Reviewer service.",
+  "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-resource-providers-codegurureviewer",
   "definitions": {},
   "properties": {
     "Name": {
