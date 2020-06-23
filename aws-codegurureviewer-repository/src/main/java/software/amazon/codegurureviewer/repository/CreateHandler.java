@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingExceptio
 import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
 import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
@@ -43,11 +44,10 @@ public class CreateHandler extends BaseHandlerStd {
                 .then(progress ->
                         proxy.initiate("AWS-CodeGuruReviewer-Repository::Create", proxyClient, model, callbackContext)
                                 .translateToServiceRequest((Translator::translateToAssociateRepositoryRequest))
-                                .makeServiceCall(this::createResource)
+                                .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model))
                                 .stabilize(this::stabilizedOnCreate)
                                 .progress())
-                .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient,
-                        logger));
+                .then(progress -> ProgressEvent.defaultSuccessHandler(progress.getResourceModel()));
     }
 
     /**
@@ -60,13 +60,15 @@ public class CreateHandler extends BaseHandlerStd {
      */
     private AssociateRepositoryResponse createResource(
             final AssociateRepositoryRequest associateRepositoryRequest,
-            final ProxyClient<CodeGuruReviewerClient> proxyClient) {
+            final ProxyClient<CodeGuruReviewerClient> proxyClient,
+            final ResourceModel model) {
         AssociateRepositoryResponse awsResponse = null;
 
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(associateRepositoryRequest,
                     proxyClient.client()::associateRepository);
             logger.log(String.format("AssociateRepository response: %s", awsResponse.toString()));
+            model.setAssociationArn(awsResponse.repositoryAssociation().associationArn());
         } catch (final InternalServerException e) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, e);
         } catch (final ValidationException e) {
@@ -74,9 +76,11 @@ public class CreateHandler extends BaseHandlerStd {
         } catch (final AccessDeniedException e) {
             throw new CfnAccessDeniedException(ResourceModel.TYPE_NAME, e);
         } catch (final ConflictException e) {
-            throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, ResourceModel.IDENTIFIER_KEY_NAME, e);
+            throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, model.getName(), e);
         } catch (final ThrottlingException e) {
             throw new CfnThrottlingException(ResourceModel.TYPE_NAME, e);
+        } catch (final Exception e) {
+            throw new CfnInternalFailureException(e);
         }
 
         logger.log(String.format("%s successfully created.", ResourceModel.TYPE_NAME));

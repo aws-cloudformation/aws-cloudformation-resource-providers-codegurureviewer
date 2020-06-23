@@ -20,7 +20,7 @@
       ]
     },
     "Owner": {
-      "description": "The owner of the repository. For a GitHub or Bitbucket repository, this is the username for the account that owns the repository.",
+      "description": "The owner of the repository. For a Bitbucket repository, this is the username for the account that owns the repository.",
       "type": "string",
       "minLength": 1,
       "maxLength": 100,
@@ -28,6 +28,13 @@
     },
     "ConnectionArn": {
       "description": "The Amazon Resource Name (ARN) of an AWS CodeStar Connections connection.",
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 256,
+      "pattern": "arn:aws(-[\\w]+)*:.+:.+:[0-9]{12}:.+"
+    },
+    "AssociationArn": {
+      "description": "The Amazon Resource Name (ARN) of the repository association.",
       "type": "string",
       "minLength": 0,
       "maxLength": 256,
@@ -40,10 +47,10 @@
     "ProviderType"
   ],
   "readOnlyProperties": [
-    "/properties/Name"
+    "/properties/AssociationArn"
   ],
   "primaryIdentifier": [
-    "/properties/Name"
+    "/properties/AssociationArn"
   ],
   "handlers": {
     "create": {
