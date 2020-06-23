@@ -46,8 +46,7 @@ public class CreateHandler extends BaseHandlerStd {
                                 .makeServiceCall(this::createResource)
                                 .stabilize(this::stabilizedOnCreate)
                                 .progress())
-                .then(progress -> new ReadHandler().handleRequest(proxy, request, callbackContext, proxyClient,
-                        logger));
+                .then(progress -> ProgressEvent.defaultSuccessHandler(progress.getResourceModel()));
     }
 
     /**
@@ -104,7 +103,7 @@ public class CreateHandler extends BaseHandlerStd {
             final ResourceModel model,
             final CallbackContext callbackContext) {
 
-        logger.log(String.format("%s [%s] Checking stablization", ResourceModel.TYPE_NAME,
+        logger.log(String.format("%s [%s] Checking stabilization", ResourceModel.TYPE_NAME,
                 model.getPrimaryIdentifier()));
 
         boolean stabilized = false;

@@ -4,6 +4,7 @@ import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositor
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.CodeCommitRepository;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationRequest;
+import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
 import software.amazon.awssdk.services.codegurureviewer.model.Repository;
 import software.amazon.awssdk.services.codegurureviewer.model.ThirdPartySourceRepository;
@@ -51,5 +52,20 @@ public class Translator {
     static DescribeRepositoryAssociationRequest translateToDescribeRepositoryAssociationRequest(final AssociateRepositoryResponse associateRepositoryResponse) {
         return DescribeRepositoryAssociationRequest.builder()
                 .associationArn(associateRepositoryResponse.repositoryAssociation().associationArn()).build();
+    }
+
+    static DescribeRepositoryAssociationRequest translateToDescribeRepositoryAssociationRequest(final ResourceModel model) {
+        return DescribeRepositoryAssociationRequest.builder()
+                .associationArn(model.getAssociationArn()).build();
+    }
+
+    static ResourceModel translateFromReadResponse(final DescribeRepositoryAssociationResponse awsResponse) {
+        return ResourceModel.builder()
+                .associationArn(awsResponse.repositoryAssociation().associationArn())
+                .name(awsResponse.repositoryAssociation().name())
+                .providerType(awsResponse.repositoryAssociation().providerType().toString())
+                .owner(awsResponse.repositoryAssociation().owner())
+                .connectionArn(awsResponse.repositoryAssociation().connectionArn())
+                .build();
     }
 }

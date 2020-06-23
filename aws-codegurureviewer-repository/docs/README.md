@@ -12,9 +12,10 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 {
     "Type" : "AWS::CodeGuruReviewer::Repository",
     "Properties" : {
+        "<a href="#name" title="Name">Name</a>" : <i>String</i>,
         "<a href="#providertype" title="ProviderType">ProviderType</a>" : <i>String</i>,
         "<a href="#owner" title="Owner">Owner</a>" : <i>String</i>,
-        "<a href="#connectionarn" title="ConnectionArn">ConnectionArn</a>" : <i>String</i>
+        "<a href="#connectionarn" title="ConnectionArn">ConnectionArn</a>" : <i>String</i>,
     }
 }
 </pre>
@@ -24,12 +25,29 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 <pre>
 Type: AWS::CodeGuruReviewer::Repository
 Properties:
+    <a href="#name" title="Name">Name</a>: <i>String</i>
     <a href="#providertype" title="ProviderType">ProviderType</a>: <i>String</i>
     <a href="#owner" title="Owner">Owner</a>: <i>String</i>
     <a href="#connectionarn" title="ConnectionArn">ConnectionArn</a>: <i>String</i>
 </pre>
 
 ## Properties
+
+#### Name
+
+Name of the repository to be associated.
+
+_Required_: Yes
+
+_Type_: String
+
+_Minimum_: <code>1</code>
+
+_Maximum_: <code>100</code>
+
+_Pattern_: <code>^\S[\w.-]*$</code>
+
+_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
 
 #### ProviderType
 
@@ -85,6 +103,6 @@ The `Fn::GetAtt` intrinsic function returns a value for a specified attribute of
 
 For more information about using the `Fn::GetAtt` intrinsic function, see [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
 
-#### Name
+#### AssociationArn
 
-Name of the repository to be associated.
+The Amazon Resource Name (ARN) of the repository association.
