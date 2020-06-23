@@ -41,7 +41,7 @@ public class CodeGuruReviewerClientBuilder {
      * for more details on the individual call timeouts.
      */
     private static final Duration OVERALL_TIMEOUT = Duration.ofMillis(10000); // We can handle more here compared to our API.
-    private static final Duration ATTEMPT_TIMEOUT = Duration.ofMillis(500);
+    private static final Duration ATTEMPT_TIMEOUT = Duration.ofMillis(1000);
 
     /**
      * Maximum amount of time that the client waits for the underlying HTTP client to establish a TCP connection.
@@ -57,7 +57,7 @@ public class CodeGuruReviewerClientBuilder {
      *
      * The general recommendation is to set this value a little higher than the ATTEMPT_TIMEOUT setting if they are used together.
      */
-    private static final Duration SOCKET_TIMEOUT = Duration.ofMillis(600); // Default: 30s
+    private static final Duration SOCKET_TIMEOUT = Duration.ofMillis(1500); // Default: 30s
 
 
     private static RetryPolicy getRetryPolicy() {

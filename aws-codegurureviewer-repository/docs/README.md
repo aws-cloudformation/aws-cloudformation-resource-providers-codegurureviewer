@@ -63,7 +63,7 @@ _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormati
 
 #### Owner
 
-The owner of the repository. For a GitHub or Bitbucket repository, this is the username for the account that owns the repository.
+The owner of the repository. For a Bitbucket repository, this is the username for the account that owns the repository.
 
 _Required_: No
 
@@ -95,7 +95,7 @@ _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormati
 
 ### Ref
 
-When you pass the logical ID of this resource to the intrinsic `Ref` function, Ref returns the Name.
+When you pass the logical ID of this resource to the intrinsic `Ref` function, Ref returns the AssociationArn.
 
 ### Fn::GetAtt
 

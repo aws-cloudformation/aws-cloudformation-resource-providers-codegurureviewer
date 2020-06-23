@@ -17,7 +17,7 @@ import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
  * - resource model construction for read/list handlers
  */
 
-public class Translator {
+public final class Translator {
 
     /**
      * Request to create a resource
