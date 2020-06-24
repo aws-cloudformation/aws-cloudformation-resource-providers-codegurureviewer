@@ -1,0 +1,16 @@
+{
+    "typeName": "AWS::CodeGuruReviewer::RepositoryAssociation",
+    "language": "java",
+    "runtime": "java8",
+    "entrypoint": "software.amazon.codegurureviewer.repositoryassociation.HandlerWrapper::handleRequest",
+    "testEntrypoint": "software.amazon.codegurureviewer.repositoryassociation.HandlerWrapper::testEntrypoint",
+    "settings": {
+        "namespace": [
+            "software",
+            "amazon",
+            "codegurureviewer",
+            "repositoryassociation"
+        ],
+        "codegen_template_path": "default"
+    }
+}
