@@ -5,6 +5,7 @@ import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositor
 import software.amazon.awssdk.services.codegurureviewer.model.CodeCommitRepository;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationResponse;
+import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
 import software.amazon.awssdk.services.codegurureviewer.model.Repository;
 import software.amazon.awssdk.services.codegurureviewer.model.ThirdPartySourceRepository;
@@ -67,6 +68,12 @@ public final class Translator {
                 .owner(awsResponse.repositoryAssociation().owner())
                 .connectionArn(awsResponse.repositoryAssociation().connectionArn())
                 .state(awsResponse.repositoryAssociation().state().toString())
+                .build();
+    }
+
+    static DisassociateRepositoryRequest translateToDisassociateRepositoryRequest(final ResourceModel model) {
+        return DisassociateRepositoryRequest.builder()
+                .associationArn(model.getAssociationArn())
                 .build();
     }
 }

@@ -1,0 +1,7 @@
+{
+  "clientRequestToken": "4b90a7e4-b790-456b-a937-0cfdfa210000",
+  "desiredResourceState": {
+    "AssociationArn": "arn:aws:codeguru-reviewer:us-west-2:123456789012:association:43277982-eb2d-43e7-914b-802632407b85"
+  },
+  "logicalResourceIdentifier": "CodeGuruTestRepositoryResource"
+}

@@ -1,27 +1,146 @@
 package software.amazon.codegurureviewer.repository;
 
+import software.amazon.awssdk.awscore.AwsRequest;
+import software.amazon.awssdk.awscore.AwsResponse;
+import software.amazon.awssdk.services.codegurureviewer.CodeGuruReviewerClient;
+import software.amazon.awssdk.services.codegurureviewer.model.AccessDeniedException;
+import software.amazon.awssdk.services.codegurureviewer.model.ConflictException;
+import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryRequest;
+import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryResponse;
+import software.amazon.awssdk.services.codegurureviewer.model.InternalServerException;
+import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociationState;
+import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingException;
+import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
+import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
+import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
+import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
+import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
+import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotFoundException;
+import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
+import software.amazon.cloudformation.exceptions.CfnThrottlingException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
-import software.amazon.cloudformation.proxy.OperationStatus;
+import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
-public class DeleteHandler extends BaseHandler<CallbackContext> {
+public class DeleteHandler extends BaseHandlerStd {
+    private Logger logger;
 
-    @Override
-    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-        final AmazonWebServicesClientProxy proxy,
-        final ResourceHandlerRequest<ResourceModel> request,
-        final CallbackContext callbackContext,
-        final Logger logger) {
+    protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
+            final AmazonWebServicesClientProxy proxy,
+            final ResourceHandlerRequest<ResourceModel> request,
+            final CallbackContext callbackContext,
+            final ProxyClient<CodeGuruReviewerClient> proxyClient,
+            final Logger logger) {
+
+        this.logger = logger;
 
         final ResourceModel model = request.getDesiredResourceState();
 
-        // TODO : put your code here
+        return ProgressEvent.progress(model, callbackContext)
+                .then(progress -> checkForPreDeleteResourceExistence(proxy, request, progress))
+                .then(progress ->
+                        proxy.initiate("AWS-CodeGuruReviewer-Repository::Delete", proxyClient, model, callbackContext)
+                                .translateToServiceRequest(Translator::translateToDisassociateRepositoryRequest)
+                                .makeServiceCall((awsRequest, sdkProxyClient) -> deleteResource(awsRequest, sdkProxyClient , model))
+                                .stabilize(this::stabilizedOnDelete)
+                                .success());
+    }
 
-        return ProgressEvent.<ResourceModel, CallbackContext>builder()
-            .resourceModel(model)
-            .status(OperationStatus.SUCCESS)
-            .build();
+    /**
+     * If your service API does not return ResourceNotFoundException on delete requests against some identifier (e.g; resource Name)
+     * and instead returns a 200 even though a resource already deleted, you must first check if the resource exists here
+     * NOTE: If your service API throws 'ResourceNotFoundException' for delete requests this method is not necessary
+     * @param proxy Amazon webservice proxy to inject credentials correctly.
+     * @param request incoming resource handler request
+     * @param progressEvent event of the previous state indicating success, in progress with delay callback or failed state
+     * @return progressEvent indicating success, in progress with delay callback or failed state
+     */
+    private ProgressEvent<ResourceModel, CallbackContext> checkForPreDeleteResourceExistence(
+            final AmazonWebServicesClientProxy proxy,
+            final ResourceHandlerRequest<ResourceModel> request,
+            final ProgressEvent<ResourceModel, CallbackContext> progressEvent) {
+        final ResourceModel model = progressEvent.getResourceModel();
+        final CallbackContext callbackContext = progressEvent.getCallbackContext();
+        try {
+            ProgressEvent<ResourceModel, CallbackContext> readProgress = new ReadHandler().handleRequest(proxy, request, callbackContext, logger);
+            if (readProgress.getResourceModel() != null
+                    && readProgress.getResourceModel() != null
+                    && readProgress.getResourceModel().getState() != null) {
+                String currentState = readProgress.getResourceModel().getState();
+                if (!currentState.equals(RepositoryAssociationState.ASSOCIATED.toString())) {
+                    logger.log(String.format("Cannot disassociate. Resource %s is in a %s state. RequestId: %s",
+                            model.getPrimaryIdentifier(),
+                            currentState,
+                            request.getClientRequestToken()));
+                    throw new CfnGeneralServiceException(String.format("Cannot disassociate. Resource %s is in a %s state.", model.getPrimaryIdentifier(), currentState));
+                }
+            }
+            return ProgressEvent.progress(model, callbackContext);
+        } catch (CfnNotFoundException e) { // ResourceNotFoundException
+            logger.log(String.format("%s does not exist. RequestId: %s. Message: %s",
+                    model.getPrimaryIdentifier(),
+                    request.getClientRequestToken(),
+                    e.getMessage()));
+            throw e;
+        }
+    }
+
+    /**
+     * Implement client invocation of the delete request through the proxyClient, which is already initialised with
+     * caller credentials, correct region and retry settings
+     * @param disassociateRepositoryRequest the aws service request to delete a resource
+     * @param proxyClient the aws service client to make the call
+     * @return delete resource response
+     */
+    private DisassociateRepositoryResponse deleteResource(
+            final DisassociateRepositoryRequest disassociateRepositoryRequest,
+            final ProxyClient<CodeGuruReviewerClient> proxyClient,
+            final ResourceModel model) {
+        DisassociateRepositoryResponse awsResponse = null;
+        try {
+            awsResponse = proxyClient.injectCredentialsAndInvokeV2(disassociateRepositoryRequest,
+                    proxyClient.client()::disassociateRepository);
+            logger.log(String.format("DisassociateAssociateRepository response: %s", awsResponse.toString()));
+        } catch (final InternalServerException e) {
+            throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, e);
+        } catch (final ValidationException e) {
+            throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, e);
+        } catch (final AccessDeniedException e) {
+            throw new CfnAccessDeniedException(ResourceModel.TYPE_NAME, e);
+        } catch (final ConflictException e) {
+            throw new CfnAlreadyExistsException(ResourceModel.TYPE_NAME, model.getName(), e);
+        } catch (final ThrottlingException e) {
+            throw new CfnThrottlingException(ResourceModel.TYPE_NAME, e);
+        } catch (final Exception e) {
+            throw new CfnInternalFailureException(e);
+        }
+
+        logger.log(String.format("%s successfully deleted.", ResourceModel.TYPE_NAME));
+        return awsResponse;
+    }
+
+    /**
+     * If deletion of your resource requires some form of stabilization (e.g. propagation delay)
+     * for more information -> https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
+     * @param awsRequest the aws service request to delete a resource
+     * @param awsResponse the aws service response to delete a resource
+     * @param proxyClient the aws service client to make the call
+     * @param model resource model
+     * @param callbackContext callback context
+     * @return boolean state of stabilized or not
+     */
+    private boolean stabilizedOnDelete(
+            final AwsRequest awsRequest,
+            final AwsResponse awsResponse,
+            final ProxyClient<CodeGuruReviewerClient> proxyClient,
+            final ResourceModel model,
+            final CallbackContext callbackContext) {
+
+        final boolean stabilized = true;
+        logger.log(String.format("%s [%s] deletion has stabilized: %s", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier(), stabilized));
+        return stabilized;
     }
 }
