@@ -108,7 +108,7 @@ public class CreateHandler extends BaseHandlerStd {
             final ResourceModel model,
             final CallbackContext callbackContext) {
 
-        logger.log(String.format("%s [%s] Checking stablization", ResourceModel.TYPE_NAME,
+        logger.log(String.format("%s [%s] Checking stabilization", ResourceModel.TYPE_NAME,
                 model.getPrimaryIdentifier()));
 
         boolean stabilized = false;

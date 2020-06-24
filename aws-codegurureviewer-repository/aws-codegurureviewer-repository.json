@@ -39,6 +39,16 @@
       "minLength": 0,
       "maxLength": 256,
       "pattern": "arn:aws(-[\\w]+)*:.+:.+:[0-9]{12}:.+"
+    },
+    "State": {
+      "description": "The state of the repository association.",
+      "type": "string",
+      "enum": [
+        "Associated",
+        "Associating",
+        "Failed",
+        "Disassociating"
+      ]
     }
   },
   "additionalProperties": false,
@@ -47,7 +57,8 @@
     "ProviderType"
   ],
   "readOnlyProperties": [
-    "/properties/AssociationArn"
+    "/properties/AssociationArn",
+    "/properties/State"
   ],
   "primaryIdentifier": [
     "/properties/AssociationArn"
