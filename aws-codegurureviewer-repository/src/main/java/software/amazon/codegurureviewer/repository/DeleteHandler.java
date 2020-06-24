@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.codegurureviewer.model.ConflictException;
 import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.InternalServerException;
+import software.amazon.awssdk.services.codegurureviewer.model.NotFoundException;
 import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociationState;
 import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingException;
 import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
@@ -100,10 +101,13 @@ public class DeleteHandler extends BaseHandlerStd {
             final ProxyClient<CodeGuruReviewerClient> proxyClient,
             final ResourceModel model) {
         DisassociateRepositoryResponse awsResponse = null;
+
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(disassociateRepositoryRequest,
                     proxyClient.client()::disassociateRepository);
             logger.log(String.format("DisassociateAssociateRepository response: %s", awsResponse.toString()));
+        } catch (final NotFoundException e) {
+            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getName(), e);
         } catch (final InternalServerException e) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, e);
         } catch (final ValidationException e) {
