@@ -40,7 +40,7 @@ public class CodeGuruReviewerClientBuilder {
      * See https://tiny.amazon.com/vlswgwgb/codeamazpackSkySbloba96fsrc
      * for more details on the individual call timeouts.
      */
-    private static final Duration OVERALL_TIMEOUT = Duration.ofMillis(10000); // We can handle more here compared to our API.
+    private static final Duration OVERALL_TIMEOUT = Duration.ofMillis(30000); // We can handle more here compared to our API.
     private static final Duration ATTEMPT_TIMEOUT = Duration.ofMillis(1000);
 
     /**
