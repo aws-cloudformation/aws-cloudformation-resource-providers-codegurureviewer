@@ -126,6 +126,14 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     @Test
     public void handleRequest_Exceptions() {
+        final RepositoryAssociation repositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
+        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse = DescribeRepositoryAssociationResponse.builder()
+                .repositoryAssociation(repositoryAssociation)
+                .build();
+        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class)))
+                .thenReturn(describeRepositoryAssociationResponse);
+
         final ResourceModel model = ResourceModel.builder()
                 .associationArn("arn:test:test")
                 .build();
