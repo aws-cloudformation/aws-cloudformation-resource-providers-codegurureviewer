@@ -2,7 +2,7 @@
   "clientRequestToken": "4b90a7e4-b790-456b-a937-0cfdfa211dfe",
   "desiredResourceState": {
     "Name": "Bitbucket-Repository-REPLACE-THIS",
-    "ProviderType": "Bitbucket",
+    "Type": "Bitbucket",
     "ConnectionArn": "arn:aws:codestar-connections:us-west-2:309314943313:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c",
     "Owner": "jimmtra"
   },
