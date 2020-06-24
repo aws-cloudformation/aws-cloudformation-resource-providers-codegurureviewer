@@ -66,6 +66,7 @@ public final class Translator {
                 .providerType(awsResponse.repositoryAssociation().providerType().toString())
                 .owner(awsResponse.repositoryAssociation().owner())
                 .connectionArn(awsResponse.repositoryAssociation().connectionArn())
+                .state(awsResponse.repositoryAssociation().state().toString())
                 .build();
     }
 }

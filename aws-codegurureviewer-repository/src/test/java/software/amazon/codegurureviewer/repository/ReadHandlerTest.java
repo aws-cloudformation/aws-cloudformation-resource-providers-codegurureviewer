@@ -62,7 +62,11 @@ public class ReadHandlerTest extends AbstractTestBase {
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger);
 
-        final ResourceModel responseModel = ResourceModel.builder().associationArn("arn:test:test").providerType(ProviderType.CODE_COMMIT.toString()).build();
+        final ResourceModel responseModel = ResourceModel.builder()
+                .associationArn("arn:test:test")
+                .state(RepositoryAssociationState.ASSOCIATED.toString())
+                .providerType(ProviderType.CODE_COMMIT.toString())
+                .build();
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
