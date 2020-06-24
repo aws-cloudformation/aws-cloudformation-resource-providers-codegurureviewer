@@ -53,7 +53,7 @@ _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormati
 
 The type of repository to be associated.
 
-_Required_: No
+_Required_: Yes
 
 _Type_: String
 

@@ -54,7 +54,7 @@
   "additionalProperties": false,
   "required": [
     "Name",
-    "ProviderType"
+    "Type"
   ],
   "readOnlyProperties": [
     "/properties/AssociationArn",
