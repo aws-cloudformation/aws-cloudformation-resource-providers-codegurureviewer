@@ -33,7 +33,7 @@ public class ReadHandler extends BaseHandlerStd {
 
         final ResourceModel model = request.getDesiredResourceState();
 
-        return proxy.initiate("AWS-CodeGuruReviewer-Repository::Read", proxyClient, model, callbackContext)
+        return proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Read", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDescribeRepositoryAssociationRequest)
                 .makeServiceCall((awsRequest, sdkProxyClient) -> readResource(awsRequest, sdkProxyClient , model))
                 .done(this::constructResourceModelFromResponse);

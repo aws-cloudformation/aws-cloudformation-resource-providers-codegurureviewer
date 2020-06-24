@@ -43,7 +43,7 @@ public class DeleteHandler extends BaseHandlerStd {
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> checkForPreDeleteResourceExistence(request, progress, proxyClient))
                 .then(progress ->
-                        proxy.initiate("AWS-CodeGuruReviewer-Repository::Delete", proxyClient, model, callbackContext)
+                        proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Delete", proxyClient, model, callbackContext)
                                 .translateToServiceRequest(Translator::translateToDisassociateRepositoryRequest)
                                 .makeServiceCall((awsRequest, sdkProxyClient) -> deleteResource(awsRequest, sdkProxyClient , model))
                                 .stabilize(this::stabilizedOnDelete)
