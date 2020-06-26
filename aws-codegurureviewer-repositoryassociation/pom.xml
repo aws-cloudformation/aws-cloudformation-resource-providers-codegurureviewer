@@ -5,9 +5,9 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>software.amazon.codegurureviewer.repository</groupId>
-    <artifactId>aws-codegurureviewer-repository-handler</artifactId>
-    <name>aws-codegurureviewer-repository-handler</name>
+    <groupId>software.amazon.codegurureviewer.repositoryassociation</groupId>
+    <artifactId>aws-codegurureviewer-repositoryassociation-handler</artifactId>
+    <name>aws-codegurureviewer-repositoryassociation-handler</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -213,7 +213,7 @@
             <resource>
                 <directory>${project.basedir}</directory>
                 <includes>
-                    <include>aws-codegurureviewer-repository.json</include>
+                    <include>aws-codegurureviewer-repositoryassociation.json</include>
                 </includes>
             </resource>
         </resources>
