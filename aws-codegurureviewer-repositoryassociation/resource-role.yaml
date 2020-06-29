@@ -26,7 +26,6 @@ Resources:
                 - "codeguru-reviewer:AssociateRepository"
                 - "codeguru-reviewer:DescribeRepositoryAssociation"
                 - "codeguru-reviewer:DisassociateRepository"
-                - "codeguru-reviewer:ListRepositoryAssociations"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

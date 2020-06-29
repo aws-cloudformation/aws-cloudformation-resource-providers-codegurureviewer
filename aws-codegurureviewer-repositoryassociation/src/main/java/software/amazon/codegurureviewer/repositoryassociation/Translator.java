@@ -44,7 +44,7 @@ public final class Translator {
                             .build()
             ).build();
         } else {
-            throw new CfnInvalidRequestException(String.format("Unknown ProviderType of %s", model.getType()));
+            throw new CfnInvalidRequestException(String.format("Unknown Type of %s", model.getType()));
         }
 
         return AssociateRepositoryRequest.builder().repository(repository).build();

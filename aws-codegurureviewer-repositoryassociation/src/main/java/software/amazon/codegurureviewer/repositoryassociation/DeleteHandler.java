@@ -75,12 +75,12 @@ public class DeleteHandler extends BaseHandlerStd {
                 throw new CfnGeneralServiceException(String.format("Cannot disassociate. Resource %s is in a %s state.", model.getPrimaryIdentifier(), state.toString()));
             }
             return ProgressEvent.progress(model, callbackContext);
-        } catch (CfnNotFoundException e) { // ResourceNotFoundException
+        } catch (NotFoundException e) { // ResourceNotFoundException
             logger.log(String.format("%s does not exist. RequestId: %s. Message: %s",
                     model.getPrimaryIdentifier(),
                     request.getClientRequestToken(),
                     e.getMessage()));
-            throw e;
+            throw new CfnNotFoundException(e);
         }
     }
 
