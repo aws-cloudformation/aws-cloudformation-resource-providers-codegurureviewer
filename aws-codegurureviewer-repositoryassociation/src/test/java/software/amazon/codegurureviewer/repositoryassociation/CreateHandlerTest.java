@@ -22,6 +22,7 @@ import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
 import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.exceptions.CfnNotStabilizedException;
 import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
 import software.amazon.cloudformation.exceptions.CfnThrottlingException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
@@ -126,6 +127,35 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getResourceModels()).isNull();
         assertThat(response.getMessage()).isNull();
         assertThat(response.getErrorCode()).isNull();
+    }
+
+    @Test
+    public void handleRequest_StabilizeFail() {
+        final RepositoryAssociation associatedRepositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
+        final AssociateRepositoryResponse associateRepositoryResponse = AssociateRepositoryResponse.builder()
+                .repositoryAssociation(associatedRepositoryAssociation).build();
+        when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenReturn(associateRepositoryResponse);
+
+        final RepositoryAssociation failedRepositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.FAILED).build();
+        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
+                DescribeRepositoryAssociationResponse.builder()
+                        .repositoryAssociation(failedRepositoryAssociation).build();
+        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class))).thenReturn(describeRepositoryAssociationResponse);
+
+        final ResourceModel model = ResourceModel.builder()
+                .name("BitBucket")
+                .type(ProviderType.BITBUCKET.toString())
+                .owner("BitBucketOwner")
+                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        assertThatExceptionOfType(CfnNotStabilizedException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
     }
 
     @Test
