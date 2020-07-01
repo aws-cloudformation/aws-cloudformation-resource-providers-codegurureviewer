@@ -1,5 +1,6 @@
 package software.amazon.codegurureviewer.repositoryassociation;
 
+import jdk.nashorn.internal.codegen.CompilerConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -165,6 +166,84 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
                 new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+
+        verify(proxyClient.client()).disassociateRepository(any(DisassociateRepositoryRequest.class));
+    }
+
+    @Test
+    public void checkForPreDeleteResourceExistence_InDeleteWorkflow() {
+        final RepositoryAssociation repositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
+        final DisassociateRepositoryResponse disassociateRepositoryResponse = DisassociateRepositoryResponse.builder()
+                .repositoryAssociation(repositoryAssociation)
+                .build();
+        when(proxyClient.client().disassociateRepository(any(DisassociateRepositoryRequest.class)))
+                .thenReturn(disassociateRepositoryResponse);
+
+        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class)))
+                .thenThrow(NotFoundException.builder().build());
+
+        final ResourceModel model = ResourceModel.builder().associationArn("arn:aws:codestar-connections:us-west-2" +
+                ":123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c").build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        CallbackContext callbackContext = new CallbackContext();
+        callbackContext.setDeleteWorkflow(true);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
+                callbackContext, proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+
+        verify(proxyClient.client()).disassociateRepository(any(DisassociateRepositoryRequest.class));
+    }
+
+    @Test
+    public void checkForPreDeleteResourceExistence_InCreateWorkflow() {
+        final RepositoryAssociation repositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATING).build();
+        final DisassociateRepositoryResponse disassociateRepositoryResponse = DisassociateRepositoryResponse.builder()
+                .repositoryAssociation(repositoryAssociation)
+                .build();
+        when(proxyClient.client().disassociateRepository(any(DisassociateRepositoryRequest.class)))
+                .thenReturn(disassociateRepositoryResponse);
+
+        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse = DescribeRepositoryAssociationResponse.builder()
+                .repositoryAssociation(repositoryAssociation)
+                .build();
+        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class)))
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenThrow(NotFoundException.builder().build());
+
+        final ResourceModel model = ResourceModel.builder().associationArn("arn:aws:codestar-connections:us-west-2" +
+                ":123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c").build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        CallbackContext callbackContext = new CallbackContext();
+        callbackContext.setCreateWorkflow(true);
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
+                callbackContext, proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
