@@ -66,7 +66,17 @@
   "handlers": {
     "create": {
       "permissions": [
-        "codeguru-reviewer:AssociateRepository"
+        "codeguru-reviewer:AssociateRepository",
+        "iam:CreateServiceLinkedRole",
+        "codecommit:TagResource",
+        "codecommit:GitPull",
+        "codecommit:TagResource",
+        "events:PutRule",
+        "events:PutTargets",
+        "codestar-connections:ListBranches",
+        "codestar-connections:ListRepositories",
+        "codestar-connections:TagResource",
+        "codestar-connections:ListTagsForResource"
       ]
     },
     "read": {
@@ -79,7 +89,11 @@
     },
     "delete": {
       "permissions": [
-        "codeguru-reviewer:DisassociateRepository"
+        "codeguru-reviewer:DisassociateRepository",
+        "codecommit:UntagResource",
+        "events:DeleteRule",
+        "events:RemoveTargets",
+        "codestar-connections:UntagResource"
       ]
     },
     "list": {
