@@ -121,7 +121,7 @@ public class CreateHandler extends BaseHandlerStd {
         if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
             stabilized = true;
         } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
-            throw new CfnNotStabilizedException(MESSAGE_FORMAT_FAILED_TO_STABILIZE, awsResponse.repositoryAssociation().associationArn());
+            throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getName());
         }
         logger.log(String.format("%s [%s] creation in state: %s. Creation has stabilized: %s", ResourceModel.TYPE_NAME,
                 model.getPrimaryIdentifier(), currentState.toString(), stabilized));

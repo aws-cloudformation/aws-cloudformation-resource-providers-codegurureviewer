@@ -16,7 +16,8 @@
       "type": "string",
       "enum": [
         "CodeCommit",
-        "Bitbucket"
+        "Bitbucket",
+        "GitHubEnterpriseServer"
       ]
     },
     "Owner": {

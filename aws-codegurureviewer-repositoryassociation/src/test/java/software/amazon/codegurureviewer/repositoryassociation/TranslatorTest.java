@@ -22,11 +22,19 @@ public class TranslatorTest {
                 Translator.translateToAssociateRepositoryRequest(ResourceModel.builder().type(ProviderType.BITBUCKET.toString()).build());
         assertNotNull(bitBucketRequest.repository().bitbucket());
         assertNull(bitBucketRequest.repository().codeCommit());
+        assertNull(bitBucketRequest.repository().gitHubEnterpriseServer());
 
         AssociateRepositoryRequest codeCommitRequest =
                 Translator.translateToAssociateRepositoryRequest(ResourceModel.builder().type(ProviderType.CODE_COMMIT.toString()).build());
-        assertNotNull(codeCommitRequest.repository().codeCommit());
         assertNull(codeCommitRequest.repository().bitbucket());
+        assertNotNull(codeCommitRequest.repository().codeCommit());
+        assertNull(bitBucketRequest.repository().gitHubEnterpriseServer());
+
+        AssociateRepositoryRequest gitHubEnterprise =
+                Translator.translateToAssociateRepositoryRequest(ResourceModel.builder().type(ProviderType.GIT_HUB_ENTERPRISE_SERVER.toString()).build());
+        assertNull(gitHubEnterprise.repository().bitbucket());
+        assertNull(gitHubEnterprise.repository().codeCommit());
+        assertNotNull(gitHubEnterprise.repository().gitHubEnterpriseServer());
     }
 
     @Test

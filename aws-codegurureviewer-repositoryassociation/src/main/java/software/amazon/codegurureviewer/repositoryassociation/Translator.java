@@ -43,6 +43,14 @@ public final class Translator {
                             .owner(model.getOwner())
                             .build()
             ).build();
+        } else if (providerType.equals(ProviderType.GIT_HUB_ENTERPRISE_SERVER.toString())) {
+            repository = Repository.builder().gitHubEnterpriseServer(
+                    ThirdPartySourceRepository.builder()
+                            .name(model.getName())
+                            .connectionArn(model.getConnectionArn())
+                            .owner(model.getOwner())
+                            .build()
+            ).build();
         } else {
             throw new CfnInvalidRequestException(String.format("Unknown Type of %s", model.getType()));
         }
