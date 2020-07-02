@@ -107,25 +107,6 @@ public class DeleteHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_FailWhenNotInInitialAssociatedState() {
-        final RepositoryAssociation repositoryAssociation =
-                RepositoryAssociation.builder().state(RepositoryAssociationState.FAILED).build();
-        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse = DescribeRepositoryAssociationResponse.builder()
-                .repositoryAssociation(repositoryAssociation)
-                .build();
-        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class))).thenReturn(describeRepositoryAssociationResponse);
-
-        final ResourceModel model = ResourceModel.builder().associationArn("arn:aws:codestar-connections:us-west-2" +
-                ":123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c").build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
-
-        assertThatExceptionOfType(CfnGeneralServiceException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
-    }
-
-    @Test
     public void handleRequest_FailWhenNotFoundException() {
         when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class))).thenThrow(NotFoundException.class);
 

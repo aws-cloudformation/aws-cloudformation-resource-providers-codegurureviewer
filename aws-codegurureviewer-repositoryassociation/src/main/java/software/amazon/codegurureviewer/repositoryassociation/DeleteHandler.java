@@ -67,14 +67,7 @@ public class DeleteHandler extends BaseHandlerStd {
         final ResourceModel model = progressEvent.getResourceModel();
         final CallbackContext callbackContext = progressEvent.getCallbackContext();
         try {
-            RepositoryAssociationState state = proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient.client()::describeRepositoryAssociation).repositoryAssociation().state();
-            if (!callbackContext.isCreateWorkflow() && !state.equals(RepositoryAssociationState.ASSOCIATED)) {
-                logger.log(String.format("Cannot disassociate. Resource %s is in a %s state. RequestId: %s",
-                        model.getPrimaryIdentifier(),
-                        state.toString(),
-                        request.getClientRequestToken()));
-                throw new CfnGeneralServiceException(String.format("Cannot disassociate. Resource %s is in a %s state.", model.getPrimaryIdentifier(), state.toString()));
-            }
+            proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient.client()::describeRepositoryAssociation).repositoryAssociation().state();
             return ProgressEvent.progress(model, callbackContext);
         } catch (NotFoundException e) { // ResourceNotFoundException
             if (callbackContext.isDeleteWorkflow()) {
