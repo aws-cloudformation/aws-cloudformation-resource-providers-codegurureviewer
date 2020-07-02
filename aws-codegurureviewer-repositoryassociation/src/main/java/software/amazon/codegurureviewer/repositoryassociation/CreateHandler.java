@@ -44,7 +44,7 @@ public class CreateHandler extends BaseHandlerStd {
                 .then(progress ->
                         proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Create", proxyClient, model, callbackContext)
                                 .translateToServiceRequest((Translator::translateToAssociateRepositoryRequest))
-                                .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model))
+                                .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model, callbackContext))
                                 .stabilize(this::stabilizedOnCreate)
                                 .progress())
                 .then(progress -> ProgressEvent.defaultSuccessHandler(progress.getResourceModel()));
@@ -61,7 +61,8 @@ public class CreateHandler extends BaseHandlerStd {
     private AssociateRepositoryResponse createResource(
             final AssociateRepositoryRequest associateRepositoryRequest,
             final ProxyClient<CodeGuruReviewerClient> proxyClient,
-            final ResourceModel model) {
+            final ResourceModel model,
+            final CallbackContext callbackContext) {
         AssociateRepositoryResponse awsResponse = null;
 
         try {
@@ -69,6 +70,7 @@ public class CreateHandler extends BaseHandlerStd {
                     proxyClient.client()::associateRepository);
             logger.log(String.format("AssociateRepository response: %s", awsResponse.toString()));
             model.setAssociationArn(awsResponse.repositoryAssociation().associationArn());
+            callbackContext.setCreateWorkflow(true);
         } catch (final InternalServerException e) {
             throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, e);
         } catch (final ValidationException e) {
@@ -119,7 +121,7 @@ public class CreateHandler extends BaseHandlerStd {
         if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
             stabilized = true;
         } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
-            throw new CfnNotStabilizedException(MESSAGE_FORMAT_FAILED_TO_STABILIZE, awsResponse.repositoryAssociation().associationArn());
+            throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getName());
         }
         logger.log(String.format("%s [%s] creation in state: %s. Creation has stabilized: %s", ResourceModel.TYPE_NAME,
                 model.getPrimaryIdentifier(), currentState.toString(), stabilized));

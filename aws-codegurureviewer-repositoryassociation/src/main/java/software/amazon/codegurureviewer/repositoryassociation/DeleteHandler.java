@@ -9,6 +9,7 @@ import software.amazon.awssdk.services.codegurureviewer.model.DisassociateReposi
 import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.InternalServerException;
 import software.amazon.awssdk.services.codegurureviewer.model.NotFoundException;
+import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
 import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociationState;
 import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingException;
 import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
@@ -45,7 +46,7 @@ public class DeleteHandler extends BaseHandlerStd {
                 .then(progress ->
                         proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Delete", proxyClient, model, callbackContext)
                                 .translateToServiceRequest(Translator::translateToDisassociateRepositoryRequest)
-                                .makeServiceCall((awsRequest, sdkProxyClient) -> deleteResource(awsRequest, sdkProxyClient , model))
+                                .makeServiceCall((awsRequest, sdkProxyClient) -> deleteResource(awsRequest, sdkProxyClient , model, callbackContext))
                                 .stabilize(this::stabilizedOnDelete)
                                 .success());
     }
@@ -66,22 +67,20 @@ public class DeleteHandler extends BaseHandlerStd {
         final ResourceModel model = progressEvent.getResourceModel();
         final CallbackContext callbackContext = progressEvent.getCallbackContext();
         try {
-            RepositoryAssociationState state = proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient.client()::describeRepositoryAssociation).repositoryAssociation().state();
-            if (!state.equals(RepositoryAssociationState.ASSOCIATED)) {
-                logger.log(String.format("Cannot disassociate. Resource %s is in a %s state. RequestId: %s",
-                        model.getPrimaryIdentifier(),
-                        state.toString(),
-                        request.getClientRequestToken()));
-                throw new CfnGeneralServiceException(String.format("Cannot disassociate. Resource %s is in a %s state.", model.getPrimaryIdentifier(), state.toString()));
-            }
+            proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient.client()::describeRepositoryAssociation).repositoryAssociation().state();
             return ProgressEvent.progress(model, callbackContext);
         } catch (NotFoundException e) { // ResourceNotFoundException
+            if (callbackContext.isDeleteWorkflow()) {
+                logger.log(String.format("In a delete workflow. Allow NotFoundException to propagate."));
+                return ProgressEvent.progress(model, callbackContext);
+            }
             logger.log(String.format("%s does not exist. RequestId: %s. Message: %s",
                     model.getPrimaryIdentifier(),
                     request.getClientRequestToken(),
                     e.getMessage()));
             throw new CfnNotFoundException(e);
         }
+
     }
 
     /**
@@ -94,12 +93,14 @@ public class DeleteHandler extends BaseHandlerStd {
     private DisassociateRepositoryResponse deleteResource(
             final DisassociateRepositoryRequest disassociateRepositoryRequest,
             final ProxyClient<CodeGuruReviewerClient> proxyClient,
-            final ResourceModel model) {
+            final ResourceModel model,
+            final CallbackContext callbackContext) {
         DisassociateRepositoryResponse awsResponse = null;
 
         try {
             awsResponse = proxyClient.injectCredentialsAndInvokeV2(disassociateRepositoryRequest,
                     proxyClient.client()::disassociateRepository);
+            callbackContext.setDeleteWorkflow(true);
             logger.log(String.format("DisassociateRepository response: %s", awsResponse.toString()));
         } catch (final NotFoundException e) {
             throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getName(), e);

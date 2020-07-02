@@ -23,9 +23,22 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                - "codecommit:GitPull"
+                - "codecommit:TagResource"
+                - "codecommit:UntagResource"
                 - "codeguru-reviewer:AssociateRepository"
                 - "codeguru-reviewer:DescribeRepositoryAssociation"
                 - "codeguru-reviewer:DisassociateRepository"
+                - "codestar-connections:ListBranches"
+                - "codestar-connections:ListRepositories"
+                - "codestar-connections:ListTagsForResource"
+                - "codestar-connections:TagResource"
+                - "codestar-connections:UntagResource"
+                - "events:DeleteRule"
+                - "events:PutRule"
+                - "events:PutTargets"
+                - "events:RemoveTargets"
+                - "iam:CreateServiceLinkedRole"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:
