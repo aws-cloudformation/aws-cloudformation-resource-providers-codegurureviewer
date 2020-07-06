@@ -24,7 +24,7 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
   protected final static int MAX_STABILIZE_ATTEMPTS = 5;
-  protected final static int STABILIZE_SLEEP_TIME_MS = 5000;
+  protected final static int STABILIZE_SLEEP_TIME_MS = 7000;
 
 
   @Override
