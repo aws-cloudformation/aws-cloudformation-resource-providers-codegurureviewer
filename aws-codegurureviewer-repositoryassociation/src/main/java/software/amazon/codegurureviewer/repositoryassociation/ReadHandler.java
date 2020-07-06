@@ -50,24 +50,11 @@ public class ReadHandler extends BaseHandlerStd {
             final DescribeRepositoryAssociationRequest describeRepositoryAssociationRequest,
             final ProxyClient<CodeGuruReviewerClient> proxyClient,
             final ResourceModel model) {
-        DescribeRepositoryAssociationResponse awsResponse = null;
-        try {
-            awsResponse = proxyClient.injectCredentialsAndInvokeV2(describeRepositoryAssociationRequest,
-                    proxyClient.client()::describeRepositoryAssociation);
-            logger.log(String.format("DescribeRepositoryAssociation response: %s", awsResponse.toString()));
-        } catch (final NotFoundException e) {
-            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, model.getName(), e);
-        } catch (final InternalServerException e) {
-            throw new CfnServiceInternalErrorException(ResourceModel.TYPE_NAME, e);
-        } catch (final ValidationException e) {
-            throw new CfnInvalidRequestException(ResourceModel.TYPE_NAME, e);
-        } catch (final AccessDeniedException e) {
-            throw new CfnAccessDeniedException(ResourceModel.TYPE_NAME, e);
-        } catch (final ThrottlingException e) {
-            throw new CfnThrottlingException(ResourceModel.TYPE_NAME, e);
-        }
 
+        DescribeRepositoryAssociationResponse awsResponse = describeRepositoryAssociation(describeRepositoryAssociationRequest, proxyClient, model);
+        logger.log(String.format("DescribeRepositoryAssociation response: %s", awsResponse.toString()));
         logger.log(String.format("%s has successfully been read.", ResourceModel.TYPE_NAME));
+
         return awsResponse;
     }
 

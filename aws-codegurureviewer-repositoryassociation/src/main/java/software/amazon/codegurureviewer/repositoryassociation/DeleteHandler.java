@@ -137,8 +137,8 @@ public class DeleteHandler extends BaseHandlerStd {
             final CallbackContext callbackContext) {
         boolean stabilized = false;
         try{
-            proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient.client()::describeRepositoryAssociation);
-        } catch (final NotFoundException e) {
+            describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient, model);
+        } catch (final CfnNotFoundException e) {
             stabilized = true;
         } catch (final Exception e) {
             logger.log(String.format("%s [%s] encounter exception when verifying stabilization", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier()));
