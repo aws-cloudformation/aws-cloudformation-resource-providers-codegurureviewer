@@ -9,13 +9,10 @@ import software.amazon.awssdk.services.codegurureviewer.model.DisassociateReposi
 import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.InternalServerException;
 import software.amazon.awssdk.services.codegurureviewer.model.NotFoundException;
-import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
-import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociationState;
 import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingException;
 import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
 import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
@@ -136,14 +133,29 @@ public class DeleteHandler extends BaseHandlerStd {
             final ResourceModel model,
             final CallbackContext callbackContext) {
         boolean stabilized = false;
-        try{
-            describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient, model);
-        } catch (final CfnNotFoundException e) {
-            stabilized = true;
-        } catch (final Exception e) {
-            logger.log(String.format("%s [%s] encounter exception when verifying stabilization", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier()));
+        int stabilizeAttempts = 0;
+
+        while (!stabilized && stabilizeAttempts < MAX_STABILIZE_ATTEMPTS) {
+
+            try {
+                describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient, model);
+            } catch (final CfnNotFoundException e) {
+                stabilized = true;
+            } catch (final Exception e) {
+                logger.log(String.format("%s [%s] encounter exception when verifying stabilization", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier()));
+            }
+
+            try {
+                Thread.sleep(STABILIZE_SLEEP_TIME_MS);
+            } catch (InterruptedException e) {
+                throw new CfnInternalFailureException(e);
+            }
+
+            logger.log(String.format("%s [%s] deletion has stabilized: %s", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier(), stabilized));
+
+            stabilizeAttempts += 1;
         }
-        logger.log(String.format("%s [%s] deletion has stabilized: %s", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier(), stabilized));
+
         return stabilized;
     }
 }

@@ -24,7 +24,6 @@ import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public class CreateHandler extends BaseHandlerStd {
-    private static final String MESSAGE_FORMAT_FAILED_TO_STABILIZE = "Repository association %s failed to stabilize.";
 
     private Logger logger;
 
@@ -46,8 +45,7 @@ public class CreateHandler extends BaseHandlerStd {
                                 .translateToServiceRequest((Translator::translateToAssociateRepositoryRequest))
                                 .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model, callbackContext))
                                 .stabilize(this::stabilizedOnCreate)
-                                .progress())
-                .then(progress -> ProgressEvent.defaultSuccessHandler(progress.getResourceModel()));
+                                .success());
     }
 
     /**
@@ -112,19 +110,33 @@ public class CreateHandler extends BaseHandlerStd {
 
         logger.log(String.format("%s [%s] Checking stabilization", ResourceModel.TYPE_NAME,
                 model.getPrimaryIdentifier()));
-
         boolean stabilized = false;
-        DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
-                proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(awsResponse), proxyClient.client()::describeRepositoryAssociation);
-        logger.log(String.format("DescribeRepositoryAssociation response: %s", describeRepositoryAssociationResponse.toString()));
-        RepositoryAssociationState currentState = describeRepositoryAssociationResponse.repositoryAssociation().state();
-        if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
-            stabilized = true;
-        } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
-            throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getName());
+        int stabilizeAttempts = 0;
+
+        while (!stabilized && stabilizeAttempts < MAX_STABILIZE_ATTEMPTS) {
+            DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
+                    describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(awsResponse), proxyClient, model);
+            logger.log(String.format("DescribeRepositoryAssociation response: %s", describeRepositoryAssociationResponse.toString()));
+            RepositoryAssociationState currentState = describeRepositoryAssociationResponse.repositoryAssociation().state();
+
+            if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
+                stabilized = true;
+            } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
+                throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getName());
+            }
+
+            logger.log(String.format("%s [%s] creation in state: %s. Creation has stabilized: %s", ResourceModel.TYPE_NAME,
+                    model.getPrimaryIdentifier(), currentState.toString(), stabilized));
+
+            try {
+                Thread.sleep(STABILIZE_SLEEP_TIME_MS);
+            } catch (InterruptedException e) {
+                throw new CfnInternalFailureException(e);
+            }
+
+            stabilizeAttempts += 1;
         }
-        logger.log(String.format("%s [%s] creation in state: %s. Creation has stabilized: %s", ResourceModel.TYPE_NAME,
-                model.getPrimaryIdentifier(), currentState.toString(), stabilized));
+
         return stabilized;
     }
 
