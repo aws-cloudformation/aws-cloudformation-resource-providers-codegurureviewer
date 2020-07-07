@@ -24,20 +24,17 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import java.time.Duration;
+
 public class DeleteHandler extends BaseHandlerStd {
     private Logger logger;
 
-    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-            final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final ProxyClient<CodeGuruReviewerClient> proxyClient,
-            final Logger logger,
-            final int maxStabilizeAttempts,
-            final int stabilizeSleepTimeMs) {
-        this.setMaxStabilizeAttempts(maxStabilizeAttempts);
-        this.setStabilizeSleepTimeMs(stabilizeSleepTimeMs);
-        return handleRequest(proxy, request, callbackContext, proxyClient, logger);
+    public DeleteHandler() {
+        super();
+    }
+
+    public DeleteHandler(final int maxStabilizedAttempts, final Duration stabilizeSleepTimeMs) {
+        super(maxStabilizedAttempts, stabilizeSleepTimeMs);
     }
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -64,15 +61,15 @@ public class DeleteHandler extends BaseHandlerStd {
     }
 
     /**
-     * If your service API does not return ResourceNotFoundException on delete requests against some identifier (e.g;
-     * resource Name)
-     * and instead returns a 200 even though a resource already deleted, you must first check if the resource exists
-     * here
+     * If your service API does not return ResourceNotFoundException on delete requests against some identifier
+     * (e.g; resource Name) and instead returns a 200 even though a resource already deleted,
+     * you must first check if the resource exists here
+     * <p>
      * NOTE: If your service API throws 'ResourceNotFoundException' for delete requests this method is not necessary
      *
      * @param request       incoming resource handler request
-     * @param progressEvent event of the previous state indicating success, in progress with delay callback or failed
-     *                     state
+     * @param progressEvent event of the previous state indicating success,
+     *                      in progress with delay callback or failed state
      * @param proxyClient   the aws service client to make the call
      * @return progressEvent indicating success, in progress with delay callback or failed state
      */
@@ -141,7 +138,8 @@ public class DeleteHandler extends BaseHandlerStd {
 
     /**
      * If deletion of your resource requires some form of stabilization (e.g. propagation delay)
-     * for more information -> https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
+     * for more information ->
+     * https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
      *
      * @param proxyClient the aws service client to make the call
      * @param model       resource model

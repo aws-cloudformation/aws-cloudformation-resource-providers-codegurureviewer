@@ -57,7 +57,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-        handler = new CreateHandler();
+        handler = new CreateHandler(TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         sdkClient = mock(CodeGuruReviewerClient.class);
         proxyClient = MOCK_PROXY(proxy, sdkClient);
@@ -73,7 +73,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
         final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
                 DescribeRepositoryAssociationResponse.builder()
-                .repositoryAssociation(associatedRepositoryAssociation).build();
+                        .repositoryAssociation(associatedRepositoryAssociation).build();
         when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class))).thenReturn(describeRepositoryAssociationResponse);
 
         final ResourceModel model = ResourceModel.builder().type(ProviderType.CODE_COMMIT.toString()).name(
@@ -84,7 +84,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                new CallbackContext(), proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -112,7 +112,8 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .name("BitBucket")
                 .type(ProviderType.BITBUCKET.toString())
                 .owner("BitBucketOwner")
-                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c")
+                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9" +
+                        "-b2b3-976fdd4ca66c")
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -120,7 +121,7 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                new CallbackContext(), proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -150,14 +151,16 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .name("BitBucket")
                 .type(ProviderType.BITBUCKET.toString())
                 .owner("BitBucketOwner")
-                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c")
+                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9" +
+                        "-b2b3-976fdd4ca66c")
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
 
-        assertThatExceptionOfType(CfnNotStabilizedException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS));
+        assertThatExceptionOfType(CfnNotStabilizedException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
     }
 
     @Test
@@ -190,7 +193,8 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .name("BitBucket")
                 .type(ProviderType.BITBUCKET.toString())
                 .owner("BitBucketOwner")
-                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c")
+                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9" +
+                        "-b2b3-976fdd4ca66c")
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -200,7 +204,7 @@ public class CreateHandlerTest extends AbstractTestBase {
         CallbackContext callbackContext = new CallbackContext();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                callbackContext, proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                callbackContext, proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -227,18 +231,23 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThatExceptionOfType(CfnServiceInternalErrorException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(ValidationException.class);
-        assertThatExceptionOfType(CfnInvalidRequestException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnInvalidRequestException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(AccessDeniedException.class);
-        assertThatExceptionOfType(CfnAccessDeniedException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnAccessDeniedException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(ConflictException.class);
-        assertThatExceptionOfType(CfnAlreadyExistsException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnAlreadyExistsException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(ThrottlingException.class);
-        assertThatExceptionOfType(CfnThrottlingException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnThrottlingException.class).isThrownBy(() -> handler.handleRequest(proxy, request
+                , new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(RuntimeException.class);
-        assertThatExceptionOfType(CfnInternalFailureException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnInternalFailureException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
     }
 }

@@ -60,7 +60,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-        handler = new DeleteHandler();
+        handler = new DeleteHandler(TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
         readHandler = mock(ReadHandler.class);
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         sdkClient = mock(CodeGuruReviewerClient.class);
@@ -92,7 +92,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
                 .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                new CallbackContext(), proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -145,7 +145,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
                 .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                new CallbackContext(), proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -187,7 +187,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
                 .build();
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                new CallbackContext(), proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                new CallbackContext(), proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -225,7 +225,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
         callbackContext.setDeleteWorkflow(true);
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                callbackContext, proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                callbackContext, proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
@@ -266,7 +266,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
         callbackContext.setCreateWorkflow(true);
 
         final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                callbackContext, proxyClient, logger, TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+                callbackContext, proxyClient, logger);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);

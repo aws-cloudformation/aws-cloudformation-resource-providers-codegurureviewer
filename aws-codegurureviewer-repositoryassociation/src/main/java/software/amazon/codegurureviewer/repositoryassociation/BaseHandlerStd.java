@@ -23,6 +23,8 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import java.time.Duration;
+
 // Placeholder for the functionality that could be shared across Create/Read/Update/Delete/List Handlers
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
@@ -31,15 +33,22 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
     private final static int MAX_STABILIZE_ATTEMPTS = 5;
     // Wait time in between each stabilizeOnHandle call. Average time for repository association is around 25 seconds
     // and the Lambda handler timeout time is 1 min so ideally the MAX_STABILIZED_ATTEMPS * STABILIZE_SLEEP_TIME_MS
-    // should be between 25,000 - 60,000 ms (25 - 60 seconds)
-    private final static int STABILIZE_SLEEP_TIME_MS = 7000;
+    // should be between 25,000 - 60,000 ms (25 - 60 seconds). In case the Lambda times out, stabilization will be
+    // called again in the new Lambda call.
+    private final static Duration STABILIZE_SLEEP_TIME_MS = Duration.ofMillis(7000);
 
-    @Setter
-    private int maxStabilizeAttempts = MAX_STABILIZE_ATTEMPTS;
+    private final int maxStabilizeAttempts;
+    private final Duration stabilizeSleepTimeMs;
 
-    @Setter
-    private int stabilizeSleepTimeMs = STABILIZE_SLEEP_TIME_MS;
+    public BaseHandlerStd() {
+        this.maxStabilizeAttempts = MAX_STABILIZE_ATTEMPTS;
+        this.stabilizeSleepTimeMs = STABILIZE_SLEEP_TIME_MS;
+    }
 
+    public BaseHandlerStd(final int maxStabilizeAttempts, final Duration stabilizeSleepTimeMs) {
+        this.maxStabilizeAttempts = maxStabilizeAttempts;
+        this.stabilizeSleepTimeMs = stabilizeSleepTimeMs;
+    }
 
     @Override
     public final ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -47,24 +56,6 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
             final ResourceHandlerRequest<ResourceModel> request,
             final CallbackContext callbackContext,
             final Logger logger) {
-        return handleRequest(
-                proxy,
-                request,
-                callbackContext != null ? callbackContext : new CallbackContext(),
-                proxy.newProxy(CodeGuruReviewerClientBuilder::getClient),
-                logger
-        );
-    }
-
-    public final ProgressEvent<ResourceModel, CallbackContext> handleRequest(
-            final AmazonWebServicesClientProxy proxy,
-            final ResourceHandlerRequest<ResourceModel> request,
-            final CallbackContext callbackContext,
-            final Logger logger,
-            final int maxStabilizeAttempts,
-            final int stabilizeSleepTimeMs) {
-        setMaxStabilizeAttempts(maxStabilizeAttempts);
-        setStabilizeSleepTimeMs(stabilizeSleepTimeMs);
         return handleRequest(
                 proxy,
                 request,
@@ -128,7 +119,7 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
             stabilized = stabilizeOnHandle(awsRequest, awsResponse, proxyClient, model, callbackContext);
 
             try {
-                Thread.sleep(stabilizeSleepTimeMs);
+                Thread.sleep(stabilizeSleepTimeMs.toMillis());
             } catch (InterruptedException e) {
                 throw new CfnInternalFailureException(e);
             }
