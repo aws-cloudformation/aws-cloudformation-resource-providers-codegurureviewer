@@ -27,7 +27,11 @@ import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
 public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
+    // Allow current Lambda Handler runner to call stabilizeOnHandle this many times
     private final static int MAX_STABILIZE_ATTEMPTS = 5;
+    // Wait time in between each stabilizeOnHandle call. Average time for repository association is around 25 seconds
+    // and the Lambda handler timeout time is 1 min so ideally the MAX_STABILIZED_ATTEMPS * STABILIZE_SLEEP_TIME_MS
+    // should be between 25,000 - 60,000 ms (25 - 60 seconds)
     private final static int STABILIZE_SLEEP_TIME_MS = 7000;
 
     @Setter
