@@ -35,6 +35,7 @@ Resources:
                 - "codestar-connections:PassConnection"
                 - "codestar-connections:TagResource"
                 - "codestar-connections:UntagResource"
+                - "codestar-connections:UseConnection"
                 - "events:DeleteRule"
                 - "events:PutRule"
                 - "events:PutTargets"
