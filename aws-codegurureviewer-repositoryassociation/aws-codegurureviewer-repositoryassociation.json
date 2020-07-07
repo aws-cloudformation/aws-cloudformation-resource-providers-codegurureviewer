@@ -76,8 +76,9 @@
         "events:PutTargets",
         "codestar-connections:ListBranches",
         "codestar-connections:ListRepositories",
-        "codestar-connections:TagResource",
-        "codestar-connections:ListTagsForResource"
+        "codestar-connections:ListTagsForResource",
+        "codestar-connections:PassConnection",
+        "codestar-connections:TagResource"
       ]
     },
     "read": {

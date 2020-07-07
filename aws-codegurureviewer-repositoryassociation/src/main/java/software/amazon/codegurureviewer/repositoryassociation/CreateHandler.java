@@ -1,5 +1,7 @@
 package software.amazon.codegurureviewer.repositoryassociation;
 
+import software.amazon.awssdk.awscore.AwsRequest;
+import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.services.codegurureviewer.CodeGuruReviewerClient;
 import software.amazon.awssdk.services.codegurureviewer.model.AccessDeniedException;
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryRequest;
@@ -23,10 +25,19 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import java.time.Duration;
+
 public class CreateHandler extends BaseHandlerStd {
-    private static final String MESSAGE_FORMAT_FAILED_TO_STABILIZE = "Repository association %s failed to stabilize.";
 
     private Logger logger;
+
+    public CreateHandler() {
+        super();
+    }
+
+    public CreateHandler(final int maxStabilizedAttempts, final Duration stabilizeSleepTimeMs) {
+        super(maxStabilizedAttempts, stabilizeSleepTimeMs);
+    }
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -45,9 +56,8 @@ public class CreateHandler extends BaseHandlerStd {
                         proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Create", proxyClient, model, callbackContext)
                                 .translateToServiceRequest((Translator::translateToAssociateRepositoryRequest))
                                 .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model, callbackContext))
-                                .stabilize(this::stabilizedOnCreate)
-                                .progress())
-                .then(progress -> ProgressEvent.defaultSuccessHandler(progress.getResourceModel()));
+                                .stabilize(this::stabilizeLoop)
+                                .success());
     }
 
     /**
@@ -89,6 +99,7 @@ public class CreateHandler extends BaseHandlerStd {
         return awsResponse;
     }
 
+
     /**
      * If your resource requires some form of stabilization (e.g. service does not provide strong consistency), you
      * will need to ensure that your code
@@ -103,29 +114,25 @@ public class CreateHandler extends BaseHandlerStd {
      * @param callbackContext callback context
      * @return boolean state of stabilized or not
      */
-    private boolean stabilizedOnCreate(
-            final AssociateRepositoryRequest awsRequest,
-            final AssociateRepositoryResponse awsResponse,
+    @Override
+    protected boolean stabilizeOnHandle(
+            final AwsRequest awsRequest,
+            final AwsResponse awsResponse,
             final ProxyClient<CodeGuruReviewerClient> proxyClient,
             final ResourceModel model,
             final CallbackContext callbackContext) {
-
-        logger.log(String.format("%s [%s] Checking stabilization", ResourceModel.TYPE_NAME,
-                model.getPrimaryIdentifier()));
-
         boolean stabilized = false;
         DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
-                proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(awsResponse), proxyClient.client()::describeRepositoryAssociation);
+                describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient, model);
         logger.log(String.format("DescribeRepositoryAssociation response: %s", describeRepositoryAssociationResponse.toString()));
         RepositoryAssociationState currentState = describeRepositoryAssociationResponse.repositoryAssociation().state();
+
         if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
             stabilized = true;
         } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
             throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getName());
         }
-        logger.log(String.format("%s [%s] creation in state: %s. Creation has stabilized: %s", ResourceModel.TYPE_NAME,
-                model.getPrimaryIdentifier(), currentState.toString(), stabilized));
+
         return stabilized;
     }
-
 }

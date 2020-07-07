@@ -1,6 +1,5 @@
 package software.amazon.codegurureviewer.repositoryassociation;
 
-import jdk.nashorn.internal.codegen.CompilerConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +20,6 @@ import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingExceptio
 import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
 import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
@@ -39,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,7 +60,7 @@ public class DeleteHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-        handler = new DeleteHandler();
+        handler = new DeleteHandler(TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
         readHandler = mock(ReadHandler.class);
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         sdkClient = mock(CodeGuruReviewerClient.class);
@@ -157,6 +156,49 @@ public class DeleteHandlerTest extends AbstractTestBase {
         assertThat(response.getErrorCode()).isNull();
 
         verify(proxyClient.client()).disassociateRepository(any(DisassociateRepositoryRequest.class));
+    }
+
+    @Test
+    public void handleRequest_StabilizeMaxRetry() {
+        final RepositoryAssociation repositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
+        final DisassociateRepositoryResponse disassociateRepositoryResponse = DisassociateRepositoryResponse.builder()
+                .repositoryAssociation(repositoryAssociation)
+                .build();
+        when(proxyClient.client().disassociateRepository(any(DisassociateRepositoryRequest.class)))
+                .thenReturn(disassociateRepositoryResponse);
+
+        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse = DescribeRepositoryAssociationResponse.builder()
+                .repositoryAssociation(repositoryAssociation)
+                .build();
+        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class)))
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenThrow(NotFoundException.builder().build());
+
+        final ResourceModel model = ResourceModel.builder().associationArn("arn:aws:codestar-connections:us-west-2" +
+                ":123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c").build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
+                new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+
+        verify(proxyClient.client()).disassociateRepository(any(DisassociateRepositoryRequest.class));
+        verify(proxyClient.client(), times(6)).describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class));
     }
 
     @Test

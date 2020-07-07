@@ -6,7 +6,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
-import software.amazon.cloudformation.exceptions.CfnThrottlingException;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;

@@ -9,13 +9,10 @@ import software.amazon.awssdk.services.codegurureviewer.model.DisassociateReposi
 import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.InternalServerException;
 import software.amazon.awssdk.services.codegurureviewer.model.NotFoundException;
-import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
-import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociationState;
 import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingException;
 import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
 import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
 import software.amazon.cloudformation.exceptions.CfnAlreadyExistsException;
-import software.amazon.cloudformation.exceptions.CfnGeneralServiceException;
 import software.amazon.cloudformation.exceptions.CfnInternalFailureException;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
@@ -27,8 +24,18 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import java.time.Duration;
+
 public class DeleteHandler extends BaseHandlerStd {
     private Logger logger;
+
+    public DeleteHandler() {
+        super();
+    }
+
+    public DeleteHandler(final int maxStabilizedAttempts, final Duration stabilizeSleepTimeMs) {
+        super(maxStabilizedAttempts, stabilizeSleepTimeMs);
+    }
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -44,20 +51,26 @@ public class DeleteHandler extends BaseHandlerStd {
         return ProgressEvent.progress(model, callbackContext)
                 .then(progress -> checkForPreDeleteResourceExistence(request, progress, proxyClient))
                 .then(progress ->
-                        proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Delete", proxyClient, model, callbackContext)
+                        proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Delete", proxyClient, model,
+                                callbackContext)
                                 .translateToServiceRequest(Translator::translateToDisassociateRepositoryRequest)
-                                .makeServiceCall((awsRequest, sdkProxyClient) -> deleteResource(awsRequest, sdkProxyClient , model, callbackContext))
-                                .stabilize(this::stabilizedOnDelete)
+                                .makeServiceCall((awsRequest, sdkProxyClient) -> deleteResource(awsRequest,
+                                        sdkProxyClient, model, callbackContext))
+                                .stabilize(this::stabilizeLoop)
                                 .success());
     }
 
     /**
-     * If your service API does not return ResourceNotFoundException on delete requests against some identifier (e.g; resource Name)
-     * and instead returns a 200 even though a resource already deleted, you must first check if the resource exists here
+     * If your service API does not return ResourceNotFoundException on delete requests against some identifier
+     * (e.g; resource Name) and instead returns a 200 even though a resource already deleted,
+     * you must first check if the resource exists here
+     * <p>
      * NOTE: If your service API throws 'ResourceNotFoundException' for delete requests this method is not necessary
-     * @param request incoming resource handler request
-     * @param progressEvent event of the previous state indicating success, in progress with delay callback or failed state
-     * @param proxyClient the aws service client to make the call
+     *
+     * @param request       incoming resource handler request
+     * @param progressEvent event of the previous state indicating success,
+     *                      in progress with delay callback or failed state
+     * @param proxyClient   the aws service client to make the call
      * @return progressEvent indicating success, in progress with delay callback or failed state
      */
     private ProgressEvent<ResourceModel, CallbackContext> checkForPreDeleteResourceExistence(
@@ -86,8 +99,9 @@ public class DeleteHandler extends BaseHandlerStd {
     /**
      * Implement client invocation of the delete request through the proxyClient, which is already initialised with
      * caller credentials, correct region and retry settings
+     *
      * @param disassociateRepositoryRequest the aws service request to delete a resource
-     * @param proxyClient the aws service client to make the call
+     * @param proxyClient                   the aws service client to make the call
      * @return delete resource response
      */
     private DisassociateRepositoryResponse deleteResource(
@@ -124,26 +138,32 @@ public class DeleteHandler extends BaseHandlerStd {
 
     /**
      * If deletion of your resource requires some form of stabilization (e.g. propagation delay)
-     * for more information -> https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
+     * for more information ->
+     * https://docs.aws.amazon.com/cloudformation-cli/latest/userguide/resource-type-test-contract.html
+     *
      * @param proxyClient the aws service client to make the call
-     * @param model resource model
+     * @param model       resource model
      * @return boolean state of stabilized or not
      */
-    private boolean stabilizedOnDelete(
+    @Override
+    protected boolean stabilizeOnHandle(
             final AwsRequest awsRequest,
             final AwsResponse awsResponse,
             final ProxyClient<CodeGuruReviewerClient> proxyClient,
             final ResourceModel model,
             final CallbackContext callbackContext) {
         boolean stabilized = false;
-        try{
-            proxyClient.injectCredentialsAndInvokeV2(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient.client()::describeRepositoryAssociation);
-        } catch (final NotFoundException e) {
+
+        try {
+            describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(model),
+                    proxyClient, model);
+        } catch (final CfnNotFoundException e) {
             stabilized = true;
         } catch (final Exception e) {
-            logger.log(String.format("%s [%s] encounter exception when verifying stabilization", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier()));
+            logger.log(String.format("%s [%s] encounter exception when verifying stabilization",
+                    ResourceModel.TYPE_NAME, model.getPrimaryIdentifier()));
         }
-        logger.log(String.format("%s [%s] deletion has stabilized: %s", ResourceModel.TYPE_NAME, model.getPrimaryIdentifier(), stabilized));
+
         return stabilized;
     }
 }

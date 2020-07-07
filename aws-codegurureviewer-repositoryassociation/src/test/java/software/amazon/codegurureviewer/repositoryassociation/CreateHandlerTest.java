@@ -37,6 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +57,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-        handler = new CreateHandler();
+        handler = new CreateHandler(TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         sdkClient = mock(CodeGuruReviewerClient.class);
         proxyClient = MOCK_PROXY(proxy, sdkClient);
@@ -71,7 +73,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
         final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
                 DescribeRepositoryAssociationResponse.builder()
-                .repositoryAssociation(associatedRepositoryAssociation).build();
+                        .repositoryAssociation(associatedRepositoryAssociation).build();
         when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class))).thenReturn(describeRepositoryAssociationResponse);
 
         final ResourceModel model = ResourceModel.builder().type(ProviderType.CODE_COMMIT.toString()).name(
@@ -110,7 +112,8 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .name("BitBucket")
                 .type(ProviderType.BITBUCKET.toString())
                 .owner("BitBucketOwner")
-                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c")
+                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9" +
+                        "-b2b3-976fdd4ca66c")
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
@@ -148,14 +151,69 @@ public class CreateHandlerTest extends AbstractTestBase {
                 .name("BitBucket")
                 .type(ProviderType.BITBUCKET.toString())
                 .owner("BitBucketOwner")
-                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9-b2b3-976fdd4ca66c")
+                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9" +
+                        "-b2b3-976fdd4ca66c")
                 .build();
 
         final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
                 .desiredResourceState(model)
                 .build();
 
-        assertThatExceptionOfType(CfnNotStabilizedException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnNotStabilizedException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
+    }
+
+    @Test
+    public void handleRequest_StabilizeMaxRetry() {
+        final RepositoryAssociation associatedRepositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
+        final AssociateRepositoryResponse associateRepositoryResponse = AssociateRepositoryResponse.builder()
+                .repositoryAssociation(associatedRepositoryAssociation).build();
+        when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenReturn(associateRepositoryResponse);
+
+        final RepositoryAssociation associatingRepositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATING).build();
+        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
+                DescribeRepositoryAssociationResponse.builder()
+                        .repositoryAssociation(associatingRepositoryAssociation).build();
+        final RepositoryAssociation associatedRepositoryAssociationResponse =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
+        final DescribeRepositoryAssociationResponse associatedDescribeRepositoryAssociationResponse =
+                DescribeRepositoryAssociationResponse.builder()
+                        .repositoryAssociation(associatedRepositoryAssociationResponse).build();
+        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class)))
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(describeRepositoryAssociationResponse)
+                .thenReturn(associatedDescribeRepositoryAssociationResponse);
+
+        final ResourceModel model = ResourceModel.builder()
+                .name("BitBucket")
+                .type(ProviderType.BITBUCKET.toString())
+                .owner("BitBucketOwner")
+                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9" +
+                        "-b2b3-976fdd4ca66c")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        CallbackContext callbackContext = new CallbackContext();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
+                callbackContext, proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+        verify(proxyClient.client(), times(6)).describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class));
     }
 
     @Test
@@ -173,18 +231,23 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThatExceptionOfType(CfnServiceInternalErrorException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(ValidationException.class);
-        assertThatExceptionOfType(CfnInvalidRequestException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnInvalidRequestException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(AccessDeniedException.class);
-        assertThatExceptionOfType(CfnAccessDeniedException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnAccessDeniedException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(ConflictException.class);
-        assertThatExceptionOfType(CfnAlreadyExistsException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnAlreadyExistsException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(ThrottlingException.class);
-        assertThatExceptionOfType(CfnThrottlingException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnThrottlingException.class).isThrownBy(() -> handler.handleRequest(proxy, request
+                , new CallbackContext(), proxyClient, logger));
 
         when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenThrow(RuntimeException.class);
-        assertThatExceptionOfType(CfnInternalFailureException.class).isThrownBy(() -> handler.handleRequest(proxy, request, new CallbackContext(), proxyClient, logger));
+        assertThatExceptionOfType(CfnInternalFailureException.class).isThrownBy(() -> handler.handleRequest(proxy,
+                request, new CallbackContext(), proxyClient, logger));
     }
 }
