@@ -17,6 +17,8 @@ import java.util.function.Function;
 public class AbstractTestBase {
   protected static final Credentials MOCK_CREDENTIALS;
   protected static final LoggerProxy logger;
+  protected final static int TEST_MAX_STABILIZE_ATTEMPTS = 5;
+  protected final static int TEST_STABILIZE_SLEEP_TIME_MS = 0;
 
   static {
     MOCK_CREDENTIALS = new Credentials("accessKey", "secretKey", "token");

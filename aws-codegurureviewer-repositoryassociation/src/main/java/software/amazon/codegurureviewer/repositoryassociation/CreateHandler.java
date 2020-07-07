@@ -1,5 +1,7 @@
 package software.amazon.codegurureviewer.repositoryassociation;
 
+import software.amazon.awssdk.awscore.AwsRequest;
+import software.amazon.awssdk.awscore.AwsResponse;
 import software.amazon.awssdk.services.codegurureviewer.CodeGuruReviewerClient;
 import software.amazon.awssdk.services.codegurureviewer.model.AccessDeniedException;
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryRequest;
@@ -27,6 +29,19 @@ public class CreateHandler extends BaseHandlerStd {
 
     private Logger logger;
 
+    public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
+            final AmazonWebServicesClientProxy proxy,
+            final ResourceHandlerRequest<ResourceModel> request,
+            final CallbackContext callbackContext,
+            final ProxyClient<CodeGuruReviewerClient> proxyClient,
+            final Logger logger,
+            final int maxStabilizeAttempts,
+            final int stabilizeSleepTimeMs) {
+        this.setMaxStabilizeAttempts(maxStabilizeAttempts);
+        this.setStabilizeSleepTimeMs(stabilizeSleepTimeMs);
+        return handleRequest(proxy, request, callbackContext, proxyClient, logger);
+    }
+
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -44,7 +59,7 @@ public class CreateHandler extends BaseHandlerStd {
                         proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Create", proxyClient, model, callbackContext)
                                 .translateToServiceRequest((Translator::translateToAssociateRepositoryRequest))
                                 .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model, callbackContext))
-                                .stabilize(this::stabilizedOnCreate)
+                                .stabilize(this::stabilizeLoop)
                                 .success());
     }
 
@@ -87,6 +102,7 @@ public class CreateHandler extends BaseHandlerStd {
         return awsResponse;
     }
 
+
     /**
      * If your resource requires some form of stabilization (e.g. service does not provide strong consistency), you
      * will need to ensure that your code
@@ -101,43 +117,25 @@ public class CreateHandler extends BaseHandlerStd {
      * @param callbackContext callback context
      * @return boolean state of stabilized or not
      */
-    private boolean stabilizedOnCreate(
-            final AssociateRepositoryRequest awsRequest,
-            final AssociateRepositoryResponse awsResponse,
+    @Override
+    protected boolean stabilizeOnHandle(
+            final AwsRequest awsRequest,
+            final AwsResponse awsResponse,
             final ProxyClient<CodeGuruReviewerClient> proxyClient,
             final ResourceModel model,
             final CallbackContext callbackContext) {
-
-        logger.log(String.format("%s [%s] Checking stabilization", ResourceModel.TYPE_NAME,
-                model.getPrimaryIdentifier()));
         boolean stabilized = false;
-        int stabilizeAttempts = 0;
+        DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
+                describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(model), proxyClient, model);
+        logger.log(String.format("DescribeRepositoryAssociation response: %s", describeRepositoryAssociationResponse.toString()));
+        RepositoryAssociationState currentState = describeRepositoryAssociationResponse.repositoryAssociation().state();
 
-        while (!stabilized && stabilizeAttempts < MAX_STABILIZE_ATTEMPTS) {
-            DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
-                    describeRepositoryAssociation(Translator.translateToDescribeRepositoryAssociationRequest(awsResponse), proxyClient, model);
-            logger.log(String.format("DescribeRepositoryAssociation response: %s", describeRepositoryAssociationResponse.toString()));
-            RepositoryAssociationState currentState = describeRepositoryAssociationResponse.repositoryAssociation().state();
-
-            if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
-                stabilized = true;
-            } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
-                throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getName());
-            }
-
-            logger.log(String.format("%s [%s] creation in state: %s. Creation has stabilized: %s", ResourceModel.TYPE_NAME,
-                    model.getPrimaryIdentifier(), currentState.toString(), stabilized));
-
-            try {
-                Thread.sleep(STABILIZE_SLEEP_TIME_MS);
-            } catch (InterruptedException e) {
-                throw new CfnInternalFailureException(e);
-            }
-
-            stabilizeAttempts += 1;
+        if (currentState.equals(RepositoryAssociationState.ASSOCIATED)) {
+            stabilized = true;
+        } else if (currentState.equals(RepositoryAssociationState.FAILED)) {
+            throw new CfnNotStabilizedException(ResourceModel.TYPE_NAME, model.getName());
         }
 
         return stabilized;
     }
-
 }
