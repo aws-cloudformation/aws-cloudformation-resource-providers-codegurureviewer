@@ -78,7 +78,8 @@
         "codestar-connections:ListRepositories",
         "codestar-connections:ListTagsForResource",
         "codestar-connections:PassConnection",
-        "codestar-connections:TagResource"
+        "codestar-connections:TagResource",
+        "codestar-connections:UseConnection"
       ]
     },
     "read": {
