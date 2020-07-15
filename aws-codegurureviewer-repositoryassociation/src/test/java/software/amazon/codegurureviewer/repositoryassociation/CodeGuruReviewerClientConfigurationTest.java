@@ -47,7 +47,7 @@ public class CodeGuruReviewerClientConfigurationTest {
     }
 
     private ClientOverrideConfiguration getClientConfiguration() {
-        return CodeGuruReviewerClientBuilder.getClientConfiguration();
+        return CodeGuruReviewerClientBuilder.clientConfiguration;
     }
 
     private RetryPolicyContext createRetryContext(SdkException exception) {
