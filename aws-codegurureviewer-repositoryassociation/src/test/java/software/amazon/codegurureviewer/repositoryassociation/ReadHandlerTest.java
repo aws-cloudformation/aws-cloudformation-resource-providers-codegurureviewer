@@ -76,7 +76,6 @@ public class ReadHandlerTest extends AbstractTestBase {
 
         final ResourceModel responseModel = ResourceModel.builder()
                 .associationArn("arn:test:test")
-                .state(RepositoryAssociationState.ASSOCIATED.toString())
                 .type(ProviderType.CODE_COMMIT.toString())
                 .build();
 

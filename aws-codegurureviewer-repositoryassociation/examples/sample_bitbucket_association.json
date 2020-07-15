@@ -1,0 +1,13 @@
+{
+  "Resources": {
+    "MyRepositoryAssociation": {
+      "Type": "AWS::CodeGuruReviewer::RepositoryAssociation",
+      "Properties": {
+        "Name": "MyBitbucketRepoName",
+        "Type": "Bitbucket",
+        "ConnectionArn": "arn:aws:codestar-connections:us-west-2:123456789012:connection/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        "Owner": "MyOwnerName"
+      }
+    }
+  }
+}

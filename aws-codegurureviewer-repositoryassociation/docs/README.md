@@ -106,7 +106,3 @@ For more information about using the `Fn::GetAtt` intrinsic function, see [Fn::G
 #### AssociationArn
 
 The Amazon Resource Name (ARN) of the repository association.
-
-#### State
-
-The state of the repository association.
