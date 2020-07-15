@@ -1,0 +1,6 @@
+Resources:
+  MyRepositoryAssociation:
+    Type: AWS::CodeGuruReviewer::RepositoryAssociation
+    Properties:
+      Name: MyRepository
+      Type: CodeCommit
