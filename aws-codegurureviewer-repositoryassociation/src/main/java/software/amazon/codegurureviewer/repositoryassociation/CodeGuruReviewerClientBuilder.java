@@ -91,25 +91,21 @@ public class CodeGuruReviewerClientBuilder {
                         c.exception().getCause().getClass().equals(AbortedException.class);
     }
 
-    static ClientOverrideConfiguration getClientConfiguration() {
-        return ClientOverrideConfiguration.builder()
+    static ClientOverrideConfiguration clientConfiguration = ClientOverrideConfiguration.builder()
                 .retryPolicy(getRetryPolicy())
                 .apiCallTimeout(OVERALL_TIMEOUT)
                 .apiCallAttemptTimeout(ATTEMPT_TIMEOUT)
                 .build();
-    }
 
-    private static SdkHttpClient getHttpClient() {
-        return ApacheHttpClient.builder()
-                .connectionTimeout(CONNECTION_TIMEOUT)
-                .socketTimeout(SOCKET_TIMEOUT)
-                .build();
-    }
+    private static SdkHttpClient httpClient = ApacheHttpClient.builder()
+            .connectionTimeout(CONNECTION_TIMEOUT)
+            .socketTimeout(SOCKET_TIMEOUT)
+            .build();
 
     public static CodeGuruReviewerClient getClient() {
         return CodeGuruReviewerClient.builder()
-                .overrideConfiguration(getClientConfiguration())
-                .httpClient(getHttpClient())
+                .overrideConfiguration(clientConfiguration)
+                .httpClient(httpClient)
                 .build();
     }
 }
