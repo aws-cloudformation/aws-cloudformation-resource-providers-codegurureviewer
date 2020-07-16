@@ -1,4 +1,4 @@
-##CloudFormation Resource Provider Package For Amazon CodeGuru Reviewer
+## CloudFormation Resource Provider Package For Amazon CodeGuru Reviewer
 
 The CloudFormation Resource Provider Package For Amazon CodeGuru Reviewer.
 
