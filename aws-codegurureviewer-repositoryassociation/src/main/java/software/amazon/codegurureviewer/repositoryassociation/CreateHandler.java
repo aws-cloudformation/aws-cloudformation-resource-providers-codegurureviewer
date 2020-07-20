@@ -55,9 +55,12 @@ public class CreateHandler extends BaseHandlerStd {
                 .then(progress ->
                         proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Create", proxyClient, model, callbackContext)
                                 .translateToServiceRequest((Translator::translateToAssociateRepositoryRequest))
+                                .backoffDelay(BACKOFF_STRATEGY)
                                 .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model, callbackContext))
-                                .stabilize(this::stabilizeLoop)
-                                .success());
+                                .stabilize(this::stabilizeOnHandle)
+                                .progress())
+                .then(progress -> ProgressEvent.defaultSuccessHandler(progress.getResourceModel()));
+
     }
 
     /**

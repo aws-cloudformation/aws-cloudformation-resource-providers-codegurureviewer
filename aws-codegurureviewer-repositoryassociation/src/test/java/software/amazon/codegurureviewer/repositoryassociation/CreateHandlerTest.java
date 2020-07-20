@@ -164,59 +164,6 @@ public class CreateHandlerTest extends AbstractTestBase {
     }
 
     @Test
-    public void handleRequest_StabilizeMaxRetry() {
-        final RepositoryAssociation associatedRepositoryAssociation =
-                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
-        final AssociateRepositoryResponse associateRepositoryResponse = AssociateRepositoryResponse.builder()
-                .repositoryAssociation(associatedRepositoryAssociation).build();
-        when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenReturn(associateRepositoryResponse);
-
-        final RepositoryAssociation associatingRepositoryAssociation =
-                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATING).build();
-        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
-                DescribeRepositoryAssociationResponse.builder()
-                        .repositoryAssociation(associatingRepositoryAssociation).build();
-        final RepositoryAssociation associatedRepositoryAssociationResponse =
-                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
-        final DescribeRepositoryAssociationResponse associatedDescribeRepositoryAssociationResponse =
-                DescribeRepositoryAssociationResponse.builder()
-                        .repositoryAssociation(associatedRepositoryAssociationResponse).build();
-        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class)))
-                .thenReturn(describeRepositoryAssociationResponse)
-                .thenReturn(describeRepositoryAssociationResponse)
-                .thenReturn(describeRepositoryAssociationResponse)
-                .thenReturn(describeRepositoryAssociationResponse)
-                .thenReturn(describeRepositoryAssociationResponse)
-                .thenReturn(associatedDescribeRepositoryAssociationResponse);
-
-        final ResourceModel model = ResourceModel.builder()
-                .name("BitBucket")
-                .type(ProviderType.BITBUCKET.toString())
-                .owner("BitBucketOwner")
-                .connectionArn("arn:aws:codestar-connections:us-west-2:123456789012:connection/adaaeec7-ccd3-46b9" +
-                        "-b2b3-976fdd4ca66c")
-                .build();
-
-        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
-                .desiredResourceState(model)
-                .build();
-
-        CallbackContext callbackContext = new CallbackContext();
-
-        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
-                callbackContext, proxyClient, logger);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
-        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
-        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
-        assertThat(response.getResourceModels()).isNull();
-        assertThat(response.getMessage()).isNull();
-        assertThat(response.getErrorCode()).isNull();
-        verify(proxyClient.client(), times(6)).describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class));
-    }
-
-    @Test
     public void handleRequest_exceptions() {
         final ResourceModel model = ResourceModel.builder()
                 .type(ProviderType.CODE_COMMIT.toString())

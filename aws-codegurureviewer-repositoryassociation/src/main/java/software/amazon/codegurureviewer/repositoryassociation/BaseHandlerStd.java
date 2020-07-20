@@ -22,6 +22,7 @@ import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
+import software.amazon.cloudformation.proxy.delay.Constant;
 
 import java.time.Duration;
 
@@ -39,6 +40,8 @@ public abstract class BaseHandlerStd extends BaseHandler<CallbackContext> {
 
     private final int maxStabilizeAttempts;
     private final Duration stabilizeSleepTimeMs;
+
+    protected static final Constant BACKOFF_STRATEGY = Constant.of().timeout(Duration.ofMinutes(5L)).delay(Duration.ofSeconds(10L)).build();
 
     public BaseHandlerStd() {
         this.maxStabilizeAttempts = MAX_STABILIZE_ATTEMPTS;
