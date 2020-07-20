@@ -24,18 +24,8 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
-import java.time.Duration;
-
 public class DeleteHandler extends BaseHandlerStd {
     private Logger logger;
-
-    public DeleteHandler() {
-        super();
-    }
-
-    public DeleteHandler(final int maxStabilizedAttempts, final Duration stabilizeSleepTimeMs) {
-        super(maxStabilizedAttempts, stabilizeSleepTimeMs);
-    }
 
     protected ProgressEvent<ResourceModel, CallbackContext> handleRequest(
             final AmazonWebServicesClientProxy proxy,
@@ -54,9 +44,10 @@ public class DeleteHandler extends BaseHandlerStd {
                         proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Delete", proxyClient, model,
                                 callbackContext)
                                 .translateToServiceRequest(Translator::translateToDisassociateRepositoryRequest)
+                                .backoffDelay(BACKOFF_STRATEGY)
                                 .makeServiceCall((awsRequest, sdkProxyClient) -> deleteResource(awsRequest,
                                         sdkProxyClient, model, callbackContext))
-                                .stabilize(this::stabilizeLoop)
+                                .stabilize(this::stabilizeOnHandle)
                                 .success());
     }
 

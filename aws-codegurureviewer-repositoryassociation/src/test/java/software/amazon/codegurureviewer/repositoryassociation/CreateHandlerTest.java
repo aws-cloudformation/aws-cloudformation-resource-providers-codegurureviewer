@@ -37,8 +37,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,7 +55,7 @@ public class CreateHandlerTest extends AbstractTestBase {
 
     @BeforeEach
     public void setup() {
-        handler = new CreateHandler(TEST_MAX_STABILIZE_ATTEMPTS, TEST_STABILIZE_SLEEP_TIME_MS);
+        handler = new CreateHandler();
         proxy = new AmazonWebServicesClientProxy(logger, MOCK_CREDENTIALS, () -> Duration.ofSeconds(600).toMillis());
         sdkClient = mock(CodeGuruReviewerClient.class);
         proxyClient = MOCK_PROXY(proxy, sdkClient);

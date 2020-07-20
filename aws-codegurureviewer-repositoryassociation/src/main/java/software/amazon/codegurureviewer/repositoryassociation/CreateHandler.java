@@ -25,19 +25,9 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
-import java.time.Duration;
-
 public class CreateHandler extends BaseHandlerStd {
 
     private Logger logger;
-
-    public CreateHandler() {
-        super();
-    }
-
-    public CreateHandler(final int maxStabilizedAttempts, final Duration stabilizeSleepTimeMs) {
-        super(maxStabilizedAttempts, stabilizeSleepTimeMs);
-    }
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
