@@ -25,19 +25,9 @@ import software.amazon.cloudformation.proxy.ProgressEvent;
 import software.amazon.cloudformation.proxy.ProxyClient;
 import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
-import java.time.Duration;
-
 public class CreateHandler extends BaseHandlerStd {
 
     private Logger logger;
-
-    public CreateHandler() {
-        super();
-    }
-
-    public CreateHandler(final int maxStabilizedAttempts, final Duration stabilizeSleepTimeMs) {
-        super(maxStabilizedAttempts, stabilizeSleepTimeMs);
-    }
 
     @Override
     public ProgressEvent<ResourceModel, CallbackContext> handleRequest(
@@ -55,9 +45,12 @@ public class CreateHandler extends BaseHandlerStd {
                 .then(progress ->
                         proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Create", proxyClient, model, callbackContext)
                                 .translateToServiceRequest((Translator::translateToAssociateRepositoryRequest))
+                                .backoffDelay(BACKOFF_STRATEGY)
                                 .makeServiceCall((awsRequest, sdkProxyClient) -> createResource(awsRequest, sdkProxyClient , model, callbackContext))
-                                .stabilize(this::stabilizeLoop)
-                                .success());
+                                .stabilize(this::stabilizeOnHandle)
+                                .progress())
+                .then(progress -> ProgressEvent.defaultSuccessHandler(progress.getResourceModel()));
+
     }
 
     /**
