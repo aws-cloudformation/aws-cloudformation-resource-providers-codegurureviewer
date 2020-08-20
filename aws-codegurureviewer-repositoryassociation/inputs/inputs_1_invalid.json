@@ -1,5 +1,5 @@
 {
   "Name": "CodeGuruTestRepository-c6b6",
   "Type": "CodeCommitt",
-  "AssociationArn": "arn:aws:codeguru-reviewer:us-east-1:391412368867:association:7a09f73b-35bc-4af7-81df-7285edff7999"
+  "AssociationArn": "arn:aws:codeguru-reviewer:us-east-1:012345678901:association:7a09f73b-35bc-4af7-81df-7285edff7999"
 }
