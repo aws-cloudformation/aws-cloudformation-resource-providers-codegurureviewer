@@ -69,13 +69,18 @@ public final class Translator {
     }
 
     static ResourceModel translateFromReadResponse(final DescribeRepositoryAssociationResponse awsResponse) {
-        return ResourceModel.builder()
-                .associationArn(awsResponse.repositoryAssociation().associationArn())
-                .name(awsResponse.repositoryAssociation().name())
-                .type(awsResponse.repositoryAssociation().providerType().toString())
-                .owner(awsResponse.repositoryAssociation().owner())
-                .connectionArn(awsResponse.repositoryAssociation().connectionArn())
-                .build();
+        ResourceModel.ResourceModelBuilder resourceModelBuilder =  ResourceModel.builder()
+                                                                                .associationArn(awsResponse.repositoryAssociation().associationArn())
+                                                                                .name(awsResponse.repositoryAssociation().name())
+                                                                                .type(awsResponse.repositoryAssociation().providerType().toString())
+                                                                                .connectionArn(awsResponse.repositoryAssociation().connectionArn());
+
+        ProviderType providerType = awsResponse.repositoryAssociation().providerType();
+        if(!providerType.equals(ProviderType.CODE_COMMIT)) {
+            resourceModelBuilder.owner(awsResponse.repositoryAssociation().owner());
+        }
+
+        return resourceModelBuilder.build();
     }
 
     static DisassociateRepositoryRequest translateToDisassociateRepositoryRequest(final ResourceModel model) {

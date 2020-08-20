@@ -87,9 +87,6 @@
         "events:RemoveTargets",
         "codestar-connections:UntagResource"
       ]
-    },
-    "list": {
-      "permissions": []
     }
   }
 }
