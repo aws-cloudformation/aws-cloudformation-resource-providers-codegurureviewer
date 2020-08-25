@@ -50,6 +50,12 @@
   "readOnlyProperties": [
     "/properties/AssociationArn"
   ],
+  "createOnlyProperties": [
+    "/properties/Name",
+    "/properties/Type",
+    "/properties/Owner",
+    "/properties/ConnectionArn"
+  ],
   "primaryIdentifier": [
     "/properties/AssociationArn"
   ],
