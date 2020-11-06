@@ -47,7 +47,7 @@ _Maximum_: <code>100</code>
 
 _Pattern_: <code>^\S[\w.-]*$</code>
 
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+_Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-replacement)
 
 #### Type
 
@@ -59,7 +59,7 @@ _Type_: String
 
 _Allowed Values_: <code>CodeCommit</code> | <code>Bitbucket</code> | <code>GitHubEnterpriseServer</code>
 
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+_Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-replacement)
 
 #### Owner
 
@@ -75,7 +75,7 @@ _Maximum_: <code>100</code>
 
 _Pattern_: <code>^\S(.*\S)?$</code>
 
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+_Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-replacement)
 
 #### ConnectionArn
 
@@ -89,7 +89,7 @@ _Maximum_: <code>256</code>
 
 _Pattern_: <code>arn:aws(-[\w]+)*:.+:.+:[0-9]{12}:.+</code>
 
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+_Update requires_: [Replacement](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-replacement)
 
 ## Return Values
 
@@ -106,3 +106,4 @@ For more information about using the `Fn::GetAtt` intrinsic function, see [Fn::G
 #### AssociationArn
 
 The Amazon Resource Name (ARN) of the repository association.
+
