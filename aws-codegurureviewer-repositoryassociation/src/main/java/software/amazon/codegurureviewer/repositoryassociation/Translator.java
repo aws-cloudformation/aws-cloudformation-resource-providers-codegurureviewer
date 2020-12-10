@@ -11,6 +11,11 @@ import software.amazon.awssdk.services.codegurureviewer.model.Repository;
 import software.amazon.awssdk.services.codegurureviewer.model.ThirdPartySourceRepository;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * This class is a centralized placeholder for
  * - api request construction
@@ -55,6 +60,14 @@ public final class Translator {
             throw new CfnInvalidRequestException(String.format("Unknown Type of %s", model.getType()));
         }
 
+        final Optional<Map<String, String>> tags = getTagsFromModel(model);
+        if(tags.isPresent()) {
+            return AssociateRepositoryRequest.builder()
+                    .repository(repository)
+                    .tags(tags.get())
+                    .build();
+        }
+
         return AssociateRepositoryRequest.builder().repository(repository).build();
     }
 
@@ -79,7 +92,13 @@ public final class Translator {
         if(!providerType.equals(ProviderType.CODE_COMMIT)) {
             resourceModelBuilder.owner(awsResponse.repositoryAssociation().owner());
         }
-
+        Map<String, String> tags = awsResponse.tags();
+        if(!tags.isEmpty()) {
+            resourceModelBuilder.tags(tags.entrySet()
+                    .stream()
+                    .map(tag -> new Tag(tag.getKey(), tag.getValue()))
+                    .collect(Collectors.toList()));
+        }
         return resourceModelBuilder.build();
     }
 
@@ -87,5 +106,13 @@ public final class Translator {
         return DisassociateRepositoryRequest.builder()
                 .associationArn(model.getAssociationArn())
                 .build();
+    }
+
+    private static Optional<Map<String, String>> getTagsFromModel(final ResourceModel model) {
+        List<Tag> tags = model.getTags();
+        if (tags == null || tags.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(tags.stream().collect(Collectors.toMap(Tag :: getKey, Tag :: getValue)));
     }
 }
