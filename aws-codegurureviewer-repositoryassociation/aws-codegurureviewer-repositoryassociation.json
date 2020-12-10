@@ -118,9 +118,6 @@
         "codeguru-reviewer:ListTagsForResource"
       ]
     },
-    "update": {
-      "permissions": []
-    },
     "delete": {
       "permissions": [
         "codeguru-reviewer:DisassociateRepository",
