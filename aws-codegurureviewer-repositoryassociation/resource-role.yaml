@@ -29,6 +29,8 @@ Resources:
                 - "codeguru-reviewer:AssociateRepository"
                 - "codeguru-reviewer:DescribeRepositoryAssociation"
                 - "codeguru-reviewer:DisassociateRepository"
+                - "codeguru-reviewer:ListTagsForResource"
+                - "codeguru-reviewer:TagResource"
                 - "codestar-connections:ListBranches"
                 - "codestar-connections:ListRepositories"
                 - "codestar-connections:ListTagsForResource"
