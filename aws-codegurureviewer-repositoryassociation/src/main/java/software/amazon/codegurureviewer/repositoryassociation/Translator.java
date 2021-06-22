@@ -1,8 +1,8 @@
 package software.amazon.codegurureviewer.repositoryassociation;
 
+import com.amazonaws.util.StringUtils;
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryResponse;
-import software.amazon.awssdk.services.codegurureviewer.model.CodeCommitRepository;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryRequest;
@@ -33,31 +33,22 @@ public final class Translator {
      */
     static AssociateRepositoryRequest translateToAssociateRepositoryRequest(final ResourceModel model) {
         Repository repository = null;
-        String providerType = model.getType();
-        if (providerType.equals(ProviderType.CODE_COMMIT.toString())) {
-            repository = Repository.builder().codeCommit(
-                    CodeCommitRepository.builder()
-                            .name(model.getName())
-                            .build()
-            ).build();
-        } else if (providerType.equals(ProviderType.BITBUCKET.toString())) {
-            repository = Repository.builder().bitbucket(
-                    ThirdPartySourceRepository.builder()
-                            .name(model.getName())
-                            .connectionArn(model.getConnectionArn())
-                            .owner(model.getOwner())
-                            .build()
-            ).build();
-        } else if (providerType.equals(ProviderType.GIT_HUB_ENTERPRISE_SERVER.toString())) {
-            repository = Repository.builder().gitHubEnterpriseServer(
-                    ThirdPartySourceRepository.builder()
-                            .name(model.getName())
-                            .connectionArn(model.getConnectionArn())
-                            .owner(model.getOwner())
-                            .build()
-            ).build();
-        } else {
-            throw new CfnInvalidRequestException(String.format("Unknown Type of %s", model.getType()));
+        ProviderType providerType = ProviderType.fromValue(model.getType());
+        switch(providerType) {
+            case CODE_COMMIT:
+                repository = getCodeCommitRepository(model);
+                break;
+            case BITBUCKET:
+                repository = Repository.builder().bitbucket(getThirdPartyRepository(model)).build();
+                break;
+            case GIT_HUB_ENTERPRISE_SERVER:
+                repository = Repository.builder().gitHubEnterpriseServer(getThirdPartyRepository(model)).build();
+                break;
+            case S3_BUCKET:
+                repository = getS3BucketRepository(model);
+                break;
+            default:
+                throw new CfnInvalidRequestException(String.format("Unknown Type of %s", providerType));
         }
 
         final Optional<Map<String, String>> tags = getTagsFromModel(model);
@@ -71,9 +62,31 @@ public final class Translator {
         return AssociateRepositoryRequest.builder().repository(repository).build();
     }
 
+    static Repository getS3BucketRepository(final ResourceModel model) {
+        if (StringUtils.isNullOrEmpty(model.getBucketName())) {
+            throw new CfnInvalidRequestException("BucketName is required for S3Bucket repository.");
+        }
+        return Repository.builder()
+                .s3Bucket(repository -> repository.name(model.getName()).bucketName(model.getBucketName()))
+                .build();
+    }
+
+    static Repository getCodeCommitRepository(ResourceModel model) {
+        return Repository.builder().codeCommit(repository -> repository.name(model.getName())).build();
+    }
+
+    static ThirdPartySourceRepository getThirdPartyRepository(ResourceModel model) {
+        return ThirdPartySourceRepository.builder()
+                .name(model.getName())
+                .connectionArn(model.getConnectionArn())
+                .owner(model.getOwner())
+                .build();
+    }
+
     static DescribeRepositoryAssociationRequest translateToDescribeRepositoryAssociationRequest(final AssociateRepositoryResponse associateRepositoryResponse) {
         return DescribeRepositoryAssociationRequest.builder()
-                .associationArn(associateRepositoryResponse.repositoryAssociation().associationArn()).build();
+                .associationArn(associateRepositoryResponse.repositoryAssociation().associationArn())
+                .build();
     }
 
     static DescribeRepositoryAssociationRequest translateToDescribeRepositoryAssociationRequest(final ResourceModel model) {
@@ -89,8 +102,13 @@ public final class Translator {
                                                                                 .connectionArn(awsResponse.repositoryAssociation().connectionArn());
 
         ProviderType providerType = awsResponse.repositoryAssociation().providerType();
-        if(!providerType.equals(ProviderType.CODE_COMMIT)) {
+        if(!(providerType.equals(ProviderType.CODE_COMMIT) || providerType.equals(ProviderType.S3_BUCKET))) {
             resourceModelBuilder.owner(awsResponse.repositoryAssociation().owner());
+        }
+        if (ProviderType.S3_BUCKET.equals(providerType)
+                && awsResponse.repositoryAssociation() != null
+                && awsResponse.repositoryAssociation().s3RepositoryDetails() != null) {
+            resourceModelBuilder.bucketName(awsResponse.repositoryAssociation().s3RepositoryDetails().bucketName());
         }
         Map<String, String> tags = awsResponse.tags();
         if(!tags.isEmpty()) {

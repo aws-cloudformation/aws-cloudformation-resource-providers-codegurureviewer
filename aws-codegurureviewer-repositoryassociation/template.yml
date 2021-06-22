@@ -13,7 +13,7 @@ Resources:
       Handler: software.amazon.codegurureviewer.repositoryassociation.HandlerWrapper::handleRequest
       Runtime: java8
       MemorySize: 256
-      CodeUri: ./target/aws-codegurureviewer-repositoryassociation-handler-1.0-SNAPSHOT.jar
+      CodeUri: ./target/aws-codegurureviewer-repositoryassociation-1.0.jar
 
   TestEntrypoint:
     Type: AWS::Serverless::Function
@@ -21,4 +21,4 @@ Resources:
       Handler: software.amazon.codegurureviewer.repositoryassociation.HandlerWrapper::testEntrypoint
       Runtime: java8
       MemorySize: 256
-      CodeUri: ./target/aws-codegurureviewer-repositoryassociation-handler-1.0-SNAPSHOT.jar
+      CodeUri: ./target/aws-codegurureviewer-repositoryassociation-1.0.jar

@@ -41,7 +41,8 @@
       "enum": [
         "CodeCommit",
         "Bitbucket",
-        "GitHubEnterpriseServer"
+        "GitHubEnterpriseServer",
+        "S3Bucket"
       ]
     },
     "Owner": {
@@ -49,6 +50,13 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 100,
+      "pattern": "^\\S(.*\\S)?$"
+    },
+    "BucketName": {
+      "description": "The name of the S3 bucket associated with an associated S3 repository. It must start with `codeguru-reviewer-`.",
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 63,
       "pattern": "^\\S(.*\\S)?$"
     },
     "ConnectionArn": {
@@ -88,7 +96,8 @@
     "/properties/Type",
     "/properties/Owner",
     "/properties/ConnectionArn",
-    "/properties/Tags"
+    "/properties/Tags",
+    "/properties/BucketName"
   ],
   "primaryIdentifier": [
     "/properties/AssociationArn"

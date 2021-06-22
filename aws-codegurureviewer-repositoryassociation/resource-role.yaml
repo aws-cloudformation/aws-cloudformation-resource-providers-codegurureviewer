@@ -43,6 +43,12 @@ Resources:
                 - "events:PutTargets"
                 - "events:RemoveTargets"
                 - "iam:CreateServiceLinkedRole"
+                - "s3:CreateBucket"
+                - "s3:PutLifecycleConfiguration"
+                - "s3:PutObject"
+                - "s3:PutBucketPolicy"
+                - "s3:GetBucketPolicy"
+                - "s3:ListBucket"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

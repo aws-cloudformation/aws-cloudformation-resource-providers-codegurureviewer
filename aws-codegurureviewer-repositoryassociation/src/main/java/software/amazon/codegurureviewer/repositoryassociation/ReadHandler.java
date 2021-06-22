@@ -1,18 +1,10 @@
 package software.amazon.codegurureviewer.repositoryassociation;
 
+import com.amazonaws.util.StringUtils;
 import software.amazon.awssdk.services.codegurureviewer.CodeGuruReviewerClient;
-import software.amazon.awssdk.services.codegurureviewer.model.AccessDeniedException;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationResponse;
-import software.amazon.awssdk.services.codegurureviewer.model.InternalServerException;
-import software.amazon.awssdk.services.codegurureviewer.model.NotFoundException;
-import software.amazon.awssdk.services.codegurureviewer.model.ThrottlingException;
-import software.amazon.awssdk.services.codegurureviewer.model.ValidationException;
-import software.amazon.cloudformation.exceptions.CfnAccessDeniedException;
-import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 import software.amazon.cloudformation.exceptions.CfnNotFoundException;
-import software.amazon.cloudformation.exceptions.CfnServiceInternalErrorException;
-import software.amazon.cloudformation.exceptions.CfnThrottlingException;
 import software.amazon.cloudformation.proxy.AmazonWebServicesClientProxy;
 import software.amazon.cloudformation.proxy.Logger;
 import software.amazon.cloudformation.proxy.ProgressEvent;
@@ -32,6 +24,9 @@ public class ReadHandler extends BaseHandlerStd {
         this.logger = logger;
 
         final ResourceModel model = request.getDesiredResourceState();
+        if (StringUtils.isNullOrEmpty(model.getAssociationArn())) {
+            throw new CfnNotFoundException(ResourceModel.TYPE_NAME, null);
+        }
 
         return proxy.initiate("AWS-CodeGuruReviewer-RepositoryAssociation::Read", proxyClient, model, callbackContext)
                 .translateToServiceRequest(Translator::translateToDescribeRepositoryAssociationRequest)
