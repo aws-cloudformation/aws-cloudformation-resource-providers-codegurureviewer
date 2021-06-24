@@ -6,9 +6,9 @@
   },
   "action": "DELETE",
   "request": {
-    "clientRequestToken": "4b90a7e4-b790-456b-a937-0cfdfa210000",
+    "clientRequestToken": "4b90a7e4-b790-456b-a937-0cfdfa211dfe",
     "desiredResourceState": {
-      "AssociationArn": "arn:aws:codeguru-reviewer:us-west-2:123456789012:association:43277982-eb2d-43e7-914b-802632407b85"
+      "AssociationArn": "arn:aws:codeguru-reviewer:us-east-1:758588794794:association:d892c786-4712-4623-86a4-8bc022e2235f"
     },
     "logicalResourceIdentifier": "CodeGuruTestRepositoryResource"
   },

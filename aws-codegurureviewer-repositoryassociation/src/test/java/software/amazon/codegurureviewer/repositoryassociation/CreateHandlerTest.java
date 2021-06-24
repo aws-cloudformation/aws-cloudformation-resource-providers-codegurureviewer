@@ -130,6 +130,42 @@ public class CreateHandlerTest extends AbstractTestBase {
         assertThat(response.getErrorCode()).isNull();
     }
 
+
+    @Test
+    public void handleRequest_S3BucketSuccess() {
+        final RepositoryAssociation associatedRepositoryAssociation =
+                RepositoryAssociation.builder().state(RepositoryAssociationState.ASSOCIATED).build();
+        final AssociateRepositoryResponse associateRepositoryResponse = AssociateRepositoryResponse.builder()
+                .repositoryAssociation(associatedRepositoryAssociation).build();
+        when(proxyClient.client().associateRepository(any(AssociateRepositoryRequest.class))).thenReturn(associateRepositoryResponse);
+
+        final DescribeRepositoryAssociationResponse describeRepositoryAssociationResponse =
+                DescribeRepositoryAssociationResponse.builder()
+                        .repositoryAssociation(associatedRepositoryAssociation).build();
+        when(proxyClient.client().describeRepositoryAssociation(any(DescribeRepositoryAssociationRequest.class))).thenReturn(describeRepositoryAssociationResponse);
+
+        final ResourceModel model = ResourceModel.builder()
+                .name("S3Bucket")
+                .type(ProviderType.S3_BUCKET.toString())
+                .bucketName("bucketName")
+                .build();
+
+        final ResourceHandlerRequest<ResourceModel> request = ResourceHandlerRequest.<ResourceModel>builder()
+                .desiredResourceState(model)
+                .build();
+
+        final ProgressEvent<ResourceModel, CallbackContext> response = handler.handleRequest(proxy, request,
+                new CallbackContext(), proxyClient, logger);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(OperationStatus.SUCCESS);
+        assertThat(response.getCallbackDelaySeconds()).isEqualTo(0);
+        assertThat(response.getResourceModel()).isEqualTo(request.getDesiredResourceState());
+        assertThat(response.getResourceModels()).isNull();
+        assertThat(response.getMessage()).isNull();
+        assertThat(response.getErrorCode()).isNull();
+    }
+
     @Test
     public void handleRequest_StabilizeFail() {
         final RepositoryAssociation associatedRepositoryAssociation =

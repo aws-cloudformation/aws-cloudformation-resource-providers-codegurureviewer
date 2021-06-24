@@ -1,0 +1,7 @@
+Resources:
+  MyRepositoryAssociation:
+    Type: AWS::CodeGuruReviewer::RepositoryAssociation
+    Properties:
+      Name: MyS3BucketRepoName
+      Type: S3Bucket
+      BucketName: codeguru-reviewer-0123456789
