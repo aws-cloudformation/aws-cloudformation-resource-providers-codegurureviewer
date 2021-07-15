@@ -10,8 +10,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositoryRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationResponse;
+import software.amazon.awssdk.services.codegurureviewer.model.ListRepositoryAssociationsRequest;
+import software.amazon.awssdk.services.codegurureviewer.model.ListRepositoryAssociationsResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
 import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociation;
+import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociationSummary;
 import software.amazon.awssdk.services.codegurureviewer.model.S3RepositoryDetails;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
 
@@ -168,6 +171,62 @@ public class TranslatorTest {
     @Test
     public void constructor() {
         new Translator();
+    }
+
+    @Test
+    public void translateToLisRepositoryAssocationResquestTest() {
+        final ListRepositoryAssociationsRequest request = ListRepositoryAssociationsRequest.builder()
+                .nextToken("nextToken")
+                .build();
+
+        assertThat(Translator.translateToLisRepositoryAssocationResquest("nextToken"))
+                .isEqualToComparingFieldByField(request);
+    }
+
+    @Test
+    public void translateFromListRepositoryAssocationResponseTest() {
+        final RepositoryAssociationSummary summary1 = RepositoryAssociationSummary.builder()
+                .associationArn(ASSOCIATION_ARN)
+                .providerType(ProviderType.CODE_COMMIT.toString())
+                .name(REPO_NAME)
+                .owner(OWNER)
+                .build();
+        final RepositoryAssociationSummary summary2 = RepositoryAssociationSummary.builder()
+                .associationArn(ASSOCIATION_ARN + "1")
+                .providerType(ProviderType.GIT_HUB.toString())
+                .name(REPO_NAME)
+                .owner(OWNER)
+                .build();
+
+        final ResourceModel model1 = ResourceModel.builder()
+                .associationArn(ASSOCIATION_ARN)
+                .type(ProviderType.CODE_COMMIT.toString())
+                .name(REPO_NAME)
+                .owner(OWNER)
+                .build();
+        final ResourceModel model2 = ResourceModel.builder()
+                .associationArn(ASSOCIATION_ARN + "1")
+                .type(ProviderType.GIT_HUB.toString())
+                .name(REPO_NAME)
+                .owner(OWNER)
+                .build();
+
+        List<ResourceModel> result =
+                Translator.translateFromListRepositoryAssocationResponse(Arrays.asList(summary1, summary2));
+
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(2);
+        assertThat(result).containsAll(Arrays.asList(model1, model2));
+    }
+
+    @Test
+    public void translateFromListRepositoryAssocationResponseTest_EmptySummaries() {
+        final List<RepositoryAssociationSummary> summaries = Arrays.asList();
+
+        List<ResourceModel> result = Translator.translateFromListRepositoryAssocationResponse(summaries);
+
+        assertThat(result).isNotNull();
+        assertThat(result.size()).isEqualTo(0);
     }
 
 }
