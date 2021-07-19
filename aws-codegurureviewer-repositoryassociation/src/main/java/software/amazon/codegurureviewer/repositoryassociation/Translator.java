@@ -6,15 +6,21 @@ import software.amazon.awssdk.services.codegurureviewer.model.AssociateRepositor
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationRequest;
 import software.amazon.awssdk.services.codegurureviewer.model.DescribeRepositoryAssociationResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.DisassociateRepositoryRequest;
+import software.amazon.awssdk.services.codegurureviewer.model.ListRepositoryAssociationsRequest;
+import software.amazon.awssdk.services.codegurureviewer.model.ListRepositoryAssociationsResponse;
 import software.amazon.awssdk.services.codegurureviewer.model.ProviderType;
 import software.amazon.awssdk.services.codegurureviewer.model.Repository;
+import software.amazon.awssdk.services.codegurureviewer.model.RepositoryAssociationSummary;
 import software.amazon.awssdk.services.codegurureviewer.model.ThirdPartySourceRepository;
 import software.amazon.cloudformation.exceptions.CfnInvalidRequestException;
+import software.amazon.cloudformation.proxy.ResourceHandlerRequest;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is a centralized placeholder for
@@ -124,6 +130,30 @@ public final class Translator {
         return DisassociateRepositoryRequest.builder()
                 .associationArn(model.getAssociationArn())
                 .build();
+    }
+
+    static ListRepositoryAssociationsRequest translateToLisRepositoryAssocationResquest(final String nextToken) {
+        return ListRepositoryAssociationsRequest.builder()
+                .nextToken(nextToken)
+                .build();
+    }
+
+    static List<ResourceModel> translateFromListRepositoryAssocationResponse(final List<RepositoryAssociationSummary> summaries) {
+        return streamOfOrEmpty(summaries)
+                .map(repositoryAssociationSummary -> ResourceModel.builder()
+                        .associationArn(repositoryAssociationSummary.associationArn())
+                        .name(repositoryAssociationSummary.name())
+                        .owner(repositoryAssociationSummary.owner())
+                        .type(repositoryAssociationSummary.providerType().toString())
+                        .connectionArn(repositoryAssociationSummary.connectionArn())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private static <T> Stream<T> streamOfOrEmpty(final Collection<T> collection) {
+        return Optional.ofNullable(collection)
+                .map(Collection::stream)
+                .orElseGet(Stream::empty);
     }
 
     private static Optional<Map<String, String>> getTagsFromModel(final ResourceModel model) {
